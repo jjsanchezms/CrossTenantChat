@@ -1,173 +1,300 @@
-/* ===== MODERN LAYOUT SYSTEM ===== */
-.page {
+/* ===== FLUENT UI LAYOUT SYSTEM ===== */
+.fluent-app-container {
     position: relative;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    background: var(--gray-50);
+    background-color: var(--fluent-neutral-background2, #f5f5f5);
+    font-family: var(--font-family-sans);
+    color: var(--fluent-neutral-foreground1, #242424);
 }
 
-main {
+/* ===== FLUENT UI MAIN CONTENT ===== */
+.fluent-main-content {
     flex: 1;
-    background: white;
+    background-color: var(--fluent-neutral-background1, #ffffff);
     margin-left: 0;
-    border-radius: var(--radius-lg) 0 0 0;
-    box-shadow: var(--shadow-sm);
-    transition: all 0.3s ease;
+    border-radius: var(--fluent-corner-radius-large, 6px) 0 0 0;
+    box-shadow: var(--fluent-shadow-2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    z-index: 1;
 }
 
-/* ===== MODERN SIDEBAR ===== */
-.sidebar {
-    background: linear-gradient(145deg, var(--primary-700) 0%, var(--primary-800) 50%, var(--primary-900) 100%);
+/* ===== FLUENT UI SIDEBAR ===== */
+.fluent-sidebar {
+    background: linear-gradient(145deg, var(--fluent-brand, #0078d4) 0%, var(--fluent-brand-pressed, #005a9e) 100%);
     position: relative;
     overflow: hidden;
+    box-shadow: var(--fluent-shadow-4);
 }
 
-.sidebar::before {
+.fluent-sidebar::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="0.5" fill="white" opacity="0.03"/><circle cx="75" cy="75" r="0.5" fill="white" opacity="0.03"/><circle cx="75" cy="25" r="0.5" fill="white" opacity="0.03"/><circle cx="25" cy="75" r="0.5" fill="white" opacity="0.03"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>') repeat;
-    opacity: 0.5;
+    background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><g fill="%23ffffff" fill-opacity="0.04"><circle cx="7" cy="7" r="1"/><circle cx="27" cy="7" r="1"/><circle cx="47" cy="7" r="1"/><circle cx="7" cy="27" r="1"/><circle cx="27" cy="27" r="1"/><circle cx="47" cy="27" r="1"/><circle cx="7" cy="47" r="1"/><circle cx="27" cy="47" r="1"/><circle cx="47" cy="47" r="1"/></g></g></svg>') repeat;
+    opacity: 0.6;
 }
 
-/* ===== MODERN TOP BAR ===== */
-.top-row {
-    background: linear-gradient(135deg, white 0%, var(--gray-50) 100%);
-    border-bottom: 1px solid var(--gray-100);
-    border-radius: var(--radius-lg) 0 0 0;
-    justify-content: flex-end;
-    height: 4rem;
+/* ===== FLUENT UI TOP BAR ===== */
+.fluent-top-bar {
+    background: linear-gradient(135deg, var(--fluent-neutral-background1, #ffffff) 0%, var(--fluent-neutral-background2, #f5f5f5) 100%);
+    border-bottom: 1px solid var(--fluent-neutral-stroke1, #d1d1d1);
+    border-radius: var(--fluent-corner-radius-large, 6px) 0 0 0;
+    height: 56px;
     display: flex;
     align-items: center;
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--fluent-shadow-2);
     position: relative;
     z-index: 10;
+    backdrop-filter: blur(8px);
 }
 
-.top-row::before {
+.fluent-top-bar::before {
     content: '';
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent 0%, var(--primary-200) 50%, transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, var(--fluent-brand, #0078d4) 50%, transparent 100%);
+    opacity: 0.3;
 }
 
-.top-row ::deep a, .top-row ::deep .btn-link {
-    white-space: nowrap;
-    margin-left: 2rem;
+.fluent-top-bar-content {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    width: 100%;
+    padding: 0 var(--fluent-spacing-xxl, 24px);
+}
+
+.fluent-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--fluent-spacing-s, 8px);
+    padding: var(--fluent-spacing-s, 8px) var(--fluent-spacing-m, 12px);
+    color: var(--fluent-neutral-foreground2, #424242);
     text-decoration: none;
-    color: var(--gray-600);
+    font-size: 14px;
     font-weight: 500;
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius);
-    transition: all 0.2s ease;
+    border-radius: var(--fluent-corner-radius-medium, 4px);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
 }
 
-.top-row ::deep a:hover, .top-row ::deep .btn-link:hover {
+.fluent-link:hover {
+    color: var(--fluent-brand, #0078d4);
+    background-color: var(--fluent-neutral-background2, #f5f5f5);
     text-decoration: none;
-    color: var(--primary-600);
-    background: var(--primary-50);
+    transform: translateY(-1px);
 }
 
-.top-row ::deep a:first-child {
-    overflow: hidden;
-    text-overflow: ellipsis;
+.fluent-link:focus-visible {
+    outline: 2px solid var(--fluent-brand, #0078d4);
+    outline-offset: 2px;
+}
+
+/* ===== FLUENT UI CONTENT AREA ===== */
+.fluent-content {
+    padding: var(--fluent-spacing-xxl, 24px);
+    min-height: calc(100vh - 56px);
+    background-color: var(--fluent-neutral-background1, #ffffff);
+}
+
+/* ===== FLUENT UI ERROR BOUNDARY ===== */
+.fluent-error-boundary {
+    display: none;
+    position: fixed;
+    bottom: var(--fluent-spacing-xl, 20px);
+    left: var(--fluent-spacing-xl, 20px);
+    right: var(--fluent-spacing-xl, 20px);
+    max-width: 600px;
+    margin: 0 auto;
+    background: linear-gradient(135deg, #fff4e6 0%, #fef3c7 100%);
+    border: 1px solid #f59e0b;
+    border-left: 4px solid #f59e0b;
+    border-radius: var(--fluent-corner-radius-large, 6px);
+    box-shadow: var(--fluent-shadow-4);
+    padding: var(--fluent-spacing-l, 16px) var(--fluent-spacing-xxl, 24px);
+    color: #92400e;
+    font-family: var(--font-family-sans);
+    z-index: 1000;
+    animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fluent-error-boundary.show {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--fluent-spacing-m, 12px);
+}
+
+.fluent-error-icon {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    color: #f59e0b;
+    margin-top: 2px;
+}
+
+.fluent-error-content {
+    flex: 1;
+}
+
+.fluent-error-content strong {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: var(--fluent-spacing-xs, 4px);
+}
+
+.fluent-error-content p {
+    font-size: 14px;
+    color: #78716c;
+    margin: 0 0 var(--fluent-spacing-m, 12px) 0;
+    line-height: 1.4;
+}
+
+.fluent-error-actions {
+    display: flex;
+    gap: var(--fluent-spacing-s, 8px);
+}
+
+.fluent-error-dismiss {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    border-radius: var(--fluent-corner-radius-medium, 4px);
+    color: #a8a29e;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fluent-error-dismiss:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #78716c;
+    transform: scale(1.1);
+}
+
+.fluent-error-dismiss:focus-visible {
+    outline: 2px solid var(--fluent-brand, #0078d4);
+    outline-offset: 2px;
 }
 
 /* ===== RESPONSIVE DESIGN ===== */
-@media (max-width: 640.98px) {
-    .top-row {
-        justify-content: space-between;
+@media (max-width: 640px) {
+    .fluent-top-bar {
+        border-radius: 0;
+        height: 48px;
+    }
+
+    .fluent-top-bar-content {
+        padding: 0 var(--fluent-spacing-l, 16px);
+    }
+    
+    .fluent-main-content {
         border-radius: 0;
     }
 
-    .top-row ::deep a, .top-row ::deep .btn-link {
-        margin-left: 0;
+    .fluent-content {
+        padding: var(--fluent-spacing-l, 16px);
     }
-    
-    main {
-        border-radius: 0;
+
+    .fluent-error-boundary {
+        left: var(--fluent-spacing-m, 12px);
+        right: var(--fluent-spacing-m, 12px);
+        bottom: var(--fluent-spacing-m, 12px);
     }
 }
 
 @media (min-width: 641px) {
-    .page {
+    .fluent-app-container {
         flex-direction: row;
     }
 
-    .sidebar {
+    .fluent-sidebar {
         width: 280px;
         height: 100vh;
         position: sticky;
         top: 0;
-        box-shadow: var(--shadow-md);
+        flex-shrink: 0;
     }
 
-    main {
-        margin-left: -1rem;
-        position: relative;
-        z-index: 1;
+    .fluent-main-content {
+        margin-left: -8px;
+        flex: 1;
+        min-width: 0;
     }
 
-    .top-row {
+    .fluent-top-bar {
         position: sticky;
         top: 0;
         z-index: 5;
+        backdrop-filter: blur(12px);
     }
 
-    .top-row.auth ::deep a:first-child {
-        flex: 1;
-        text-align: right;
-        width: 0;
+    .fluent-top-bar-content {
+        padding-left: var(--fluent-spacing-xxl, 24px);
+        padding-right: var(--fluent-spacing-xxl, 24px);
     }
 
-    .top-row, article {
-        padding-left: 3rem !important;
-        padding-right: 2rem !important;
+    .fluent-content {
+        padding: var(--fluent-spacing-xxl, 24px) var(--fluent-spacing-xxl, 24px);
     }
 }
 
-/* ===== ERROR UI MODERNIZATION ===== */
-#blazor-error-ui {
-    color-scheme: light only;
-    background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%);
-    bottom: 1rem;
-    left: 1rem;
-    right: 1rem;
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
-    box-sizing: border-box;
-    display: none;
-    padding: 1rem 1.5rem;
-    position: fixed;
-    z-index: 1000;
-    border-left: 4px solid var(--accent-orange);
-    color: #92400e;
-    font-weight: 500;
+/* ===== DARK MODE SUPPORT (Future Enhancement) ===== */
+@media (prefers-color-scheme: dark) {
+    .fluent-app-container {
+        background-color: #1e1e1e;
+        color: #ffffff;
+    }
+
+    .fluent-main-content {
+        background-color: #252526;
+    }
+
+    .fluent-top-bar {
+        background: linear-gradient(135deg, #252526 0%, #2d2d30 100%);
+        border-bottom-color: #3e3e42;
+    }
+
+    .fluent-content {
+        background-color: #252526;
+    }
 }
 
-#blazor-error-ui .dismiss {
-    cursor: pointer;
-    position: absolute;
-    right: 1rem;
-    top: 1rem;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius);
-    background: rgba(0, 0, 0, 0.1);
-    transition: all 0.2s ease;
-}
+/* ===== HIGH CONTRAST SUPPORT ===== */
+@media (prefers-contrast: high) {
+    .fluent-sidebar {
+        border-right: 2px solid;
+    }
 
-#blazor-error-ui .dismiss:hover {
-    background: rgba(0, 0, 0, 0.2);
-    transform: scale(1.1);
+    .fluent-top-bar {
+        border-bottom: 2px solid;
+    }
+
+    .fluent-link:focus-visible {
+        outline-width: 3px;
+    }
 }
