@@ -18,12 +18,4 @@
     <PackageReference Include="Azure.Identity" Version="1.12.1" />
   </ItemGroup>
 
-  <!-- Target to ensure scoped CSS bundle is available during development -->
-  <Target Name="EnsureScopedCssForDevelopment" AfterTargets="Build" Condition="'$(Configuration)' == 'Debug'">
-    <ItemGroup>
-      <PublishFiles Include="bin\$(Configuration)\$(TargetFramework)\publish\wwwroot\$(AssemblyName).styles.css" />
-    </ItemGroup>
-    <Copy SourceFiles="@(PublishFiles)" DestinationFolder="wwwroot" Condition="Exists('%(PublishFiles.Identity)')" ContinueOnError="true" />
-  </Target>
-
 </Project>
