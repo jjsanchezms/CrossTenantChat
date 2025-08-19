@@ -1,0 +1,95 @@
+@page "/login"
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.OpenIdConnect
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+@inject NavigationManager Navigation
+@inject ILogger<Login> Logger
+@attribute [AllowAnonymous]
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white text-center">
+                    <h3 class="mb-0">🔐 Cross-Tenant Authentication</h3>
+                    <p class="mb-0">Azure Communication Services + Microsoft Entra ID</p>
+                </div>
+                <div class="card-body text-center">
+                    <h5 class="mb-4">Select Your Tenant</h5>
+                    
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <div class="card border-warning">
+                                <div class="card-body">
+                                    <h6 class="card-title">🏢 Fabrikam Corp</h6>
+                                    <p class="card-text text-muted">Cross-tenant user authentication</p>
+                                    <button class="btn btn-warning" @onclick='() => LoginWithTenant("Fabrikam")'>
+                                        Login with Fabrikam
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <div class="card border-info">
+                                <div class="card-body">
+                                    <h6 class="card-title">🏛️ Contoso Ltd</h6>
+                                    <p class="card-text text-muted">ACS resource owner</p>
+                                    <button class="btn btn-info" @onclick='() => LoginWithTenant("Contoso")'>
+                                        Login with Contoso
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mt-3">
+                        <strong>Demo Information:</strong><br>
+                        Choose Fabrikam to demonstrate cross-tenant authentication,<br>
+                        or Contoso for local tenant authentication.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrl { get; set; }
+
+    private async Task LoginWithTenant(string tenant)
+    {
+        Logger.LogInformation("Initiating login for tenant: {Tenant}", tenant);
+        
+        // Store the selected tenant in session/state for later use
+        var properties = new AuthenticationProperties();
+        
+        // Set the tenant-specific authority based on selection
+        if (tenant == "Fabrikam")
+        {
+            // This would normally redirect to Fabrikam's Entra ID
+            // For now, we'll use a single tenant approach and simulate the difference
+            properties.Items["tenant"] = "Fabrikam";
+            properties.Items["tenant_id"] = "307083d3-52ba-4934-a29a-97cefcedc6a6";
+        }
+        else
+        {
+            properties.Items["tenant"] = "Contoso";
+            properties.Items["tenant_id"] = "8c7f97d6-f873-4732-a074-8d2ab93da886";
+        }
+        
+        if (!string.IsNullOrEmpty(ReturnUrl))
+        {
+            properties.RedirectUri = ReturnUrl;
+        }
+        else
+        {
+            properties.RedirectUri = "/chat";
+        }
+
+        Navigation.NavigateTo($"/challenge/oidc?tenant={tenant}&returnUrl={Uri.EscapeDataString(properties.RedirectUri)}", forceLoad: true);
+    }
+}

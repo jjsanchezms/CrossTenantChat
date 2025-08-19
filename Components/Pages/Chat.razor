@@ -1,0 +1,455 @@
+@page "/chat"
+@using CrossTenantChat.Models
+@using CrossTenantChat.Services
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject IAzureCommunicationService AcsService
+@inject IEntraIdAuthenticationService AuthService
+@inject ILogger<Chat> Logger
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="text-primary mb-4">
+                🌐 Cross-Tenant Chat Demo
+                <small class="text-muted">Azure Communication Services + Microsoft Entra ID</small>
+            </h1>
+        </div>
+    </div>
+
+    @if (currentUser == null && !isLoading)
+    {
+        <div class="row">
+            <div class="col-12 text-center">
+                <div class="alert alert-warning">
+                    <h4>🔐 Authentication Required</h4>
+                    <p>Please log in to access the cross-tenant chat demo.</p>
+                    <a href="/login" class="btn btn-primary">Go to Login</a>
+                </div>
+            </div>
+        </div>
+    }
+    else if (isLoading)
+    {
+        <div class="row">
+            <div class="col-12 text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3">Initializing authentication...</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <!-- User Info Panel -->
+            <div class="col-md-3">
+                <div class="card mb-3 @(currentUser?.IsFromFabrikam == true ? "border-warning" : "border-info")">
+                    <div class="card-header @(currentUser?.IsFromFabrikam == true ? "bg-warning" : "bg-info") text-white">
+                        <h6 class="mb-0">
+                            @(currentUser?.IsFromFabrikam == true ? "🌐 Cross-Tenant User" : "🏢 Local User")
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-1"><strong>@currentUser?.Name</strong></p>
+                        <p class="mb-1 text-muted small">@currentUser?.Email</p>
+                        <p class="mb-1"><span class="badge @(currentUser?.IsFromFabrikam == true ? "bg-warning" : "bg-info")">@currentUser?.TenantName</span></p>
+                        <p class="mb-0 text-muted small">ACS ID: @currentUser?.AcsUserId</p>
+                        
+                        @if (authFlow != null)
+                        {
+                            <hr>
+                            <h6>Authentication Flow:</h6>
+                            @foreach (var step in authFlow.Steps)
+                            {
+                                <div class="small mb-1">
+                                    @if (step.IsSuccessful)
+                                    {
+                                        <span class="text-success">✅</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-danger">❌</span>
+                                    }
+                                    @step.StepName
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">💬 Chat Threads</h6>
+                    </div>
+                    <div class="card-body">
+                        @if (userThreads.Any())
+                        {
+                            @foreach (var thread in userThreads)
+                            {
+                                <div class="mb-2">
+                                    <button class="btn btn-outline-primary btn-sm w-100 text-start" 
+                                            @onclick="() => SelectThread(thread.Id)">
+                                        @if (thread.IsCrossTenant)
+                                        {
+                                            <span>🌐</span>
+                                        }
+                                        @thread.Topic
+                                    </button>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p class="text-muted small">No chat threads yet</p>
+                        }
+                        
+                        <button class="btn btn-success btn-sm w-100 mt-2" @onclick="ShowNewThreadModal">
+                            ➕ New Thread
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Area -->
+            <div class="col-md-9">
+                @if (!string.IsNullOrEmpty(selectedThreadId))
+                {
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                @if (selectedThread?.IsCrossTenant == true)
+                                {
+                                    <span>🌐</span>
+                                }
+                                @selectedThread?.Topic
+                            </h5>
+                            <button class="btn btn-outline-secondary btn-sm" @onclick="RefreshMessages">
+                                🔄 Refresh
+                            </button>
+                        </div>
+                        <div class="card-body d-flex flex-column" style="height: 500px;">
+                            <!-- Messages -->
+                            <div class="flex-grow-1 overflow-auto mb-3" style="max-height: 400px;">
+                                @if (currentMessages.Any())
+                                {
+                                    @foreach (var message in currentMessages)
+                                    {
+                                        <div class="mb-2 p-2 rounded @GetMessageCssClass(message)">
+                                            <div class="small text-muted">
+                                                <strong>@message.SenderName</strong>
+                                                @if (!string.IsNullOrEmpty(message.SenderTenant) && message.SenderTenant != "System")
+                                                {
+                                                    <span class="badge @(message.SenderTenant == "Fabrikam" ? "bg-warning" : "bg-info") ms-1">
+                                                        @message.SenderTenant
+                                                    </span>
+                                                }
+                                                <span class="ms-2">@message.Timestamp.ToString("HH:mm:ss")</span>
+                                            </div>
+                                            <div>@message.Content</div>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <p class="text-muted text-center">No messages yet. Start the conversation!</p>
+                                }
+                            </div>
+
+                            <!-- Message Input -->
+                            <div class="input-group">
+                                <input type="text" class="form-control" @bind="newMessage" @onkeypress="HandleKeyPress" 
+                                       placeholder="Type your message..." disabled="@isSendingMessage">
+                                <button class="btn btn-primary" @onclick="SendMessage" disabled="@(isSendingMessage || string.IsNullOrEmpty(newMessage))">
+                                    @if (isSendingMessage)
+                                    {
+                                        <span class="spinner-border spinner-border-sm"></span>
+                                    }
+                                    else
+                                    {
+                                        <span>📤 Send</span>
+                                    }
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="card h-100">
+                        <div class="card-body d-flex align-items-center justify-content-center">
+                            <div class="text-center text-muted">
+                                <h3>💬</h3>
+                                <p>Select a chat thread or create a new one to start messaging</p>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<!-- New Thread Modal -->
+@if (showNewThreadModal)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">💬 Create New Chat Thread</h5>
+                    <button type="button" class="btn-close" @onclick="() => showNewThreadModal = false"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="threadTopic" class="form-label">Thread Topic:</label>
+                        <input type="text" class="form-control" id="threadTopic" @bind="newThreadTopic" 
+                               placeholder="Enter chat topic...">
+                    </div>
+                    @if (currentUser?.IsFromFabrikam == true)
+                    {
+                        <div class="alert alert-warning">
+                            <strong>🌐 Cross-Tenant Chat:</strong> 
+                            This thread will be created by a Fabrikam user in Contoso's ACS resources.
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="() => showNewThreadModal = false">
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" @onclick="CreateNewThread" 
+                            disabled="@(isCreatingThread || string.IsNullOrEmpty(newThreadTopic))">
+                        @if (isCreatingThread)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+                        Create Thread
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [CascadingParameter]
+    public Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
+    private ChatUser? currentUser;
+    private CrossTenantAuthenticationFlow? authFlow;
+    private bool isLoading = true;
+    private bool isAuthenticating = false;
+
+    private List<ChatThread> userThreads = new();
+    private string selectedThreadId = "";
+    private ChatThread? selectedThread;
+    private List<Models.ChatMessage> currentMessages = new();
+
+    private string newMessage = "";
+    private bool isSendingMessage = false;
+
+    private bool showNewThreadModal = false;
+    private string newThreadTopic = "";
+    private bool isCreatingThread = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Logger.LogInformation("🚀 Cross-Tenant Chat Demo initialized");
+        
+        if (AuthenticationStateTask != null)
+        {
+            var authState = await AuthenticationStateTask;
+            if (authState.User.Identity?.IsAuthenticated == true)
+            {
+                await InitializeAuthenticatedUser(authState.User);
+            }
+        }
+        
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task InitializeAuthenticatedUser(ClaimsPrincipal user)
+    {
+        try
+        {
+            Logger.LogInformation("🔐 Initializing authenticated user");
+
+            // Extract user information from claims
+            var nameIdentifier = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? user.FindFirst("oid")?.Value;
+            var name = user.FindFirst(ClaimTypes.Name)?.Value ?? user.FindFirst("name")?.Value;
+            var email = user.FindFirst(ClaimTypes.Email)?.Value ?? user.FindFirst("preferred_username")?.Value;
+            var tenantId = user.FindFirst("tid")?.Value;
+
+            if (string.IsNullOrEmpty(nameIdentifier))
+            {
+                Logger.LogError("❌ No user identifier found in claims");
+                return;
+            }
+
+            // Determine if this is a cross-tenant user based on tenant ID
+            var fabrikamTenantId = "307083d3-52ba-4934-a29a-97cefcedc6a6";
+            
+            bool isFromFabrikam = tenantId == fabrikamTenantId;
+            string tenantName = isFromFabrikam ? "Fabrikam" : "Contoso";
+
+            currentUser = new ChatUser
+            {
+                Id = nameIdentifier,
+                Name = name ?? "Unknown User",
+                Email = email ?? "",
+                TenantId = tenantId ?? "",
+                TenantName = tenantName,
+                IsFromFabrikam = isFromFabrikam,
+                AccessToken = "" // Will be populated by token exchange
+            };
+
+            Logger.LogInformation("✅ User initialized: {UserName} from {TenantName} ({TenantId})", 
+                currentUser.Name, tenantName, tenantId);
+
+            // Perform token exchange for ACS access
+            await ExchangeTokenForAcs();
+
+            // Load user's chat threads
+            await RefreshUserThreads();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Error initializing authenticated user");
+        }
+    }
+
+    private async Task ExchangeTokenForAcs()
+    {
+        if (currentUser == null) return;
+
+        try
+        {
+            Logger.LogInformation("🔄 Exchanging token for ACS access");
+
+            // In a real implementation, you would get the actual access token from the authentication context
+            // For now, we'll simulate this with the available user claims
+            var tokenResult = await AcsService.ExchangeEntraIdTokenForAcsTokenAsync(currentUser);
+
+            if (!tokenResult.IsSuccess)
+            {
+                Logger.LogError("❌ ACS token exchange failed: {Error}", tokenResult.ErrorMessage);
+                return;
+            }
+
+            Logger.LogInformation("✅ ACS token exchange successful");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Error during ACS token exchange");
+        }
+    }
+
+    private async Task RefreshUserThreads()
+    {
+        if (currentUser != null)
+        {
+            userThreads = await AcsService.GetUserChatThreadsAsync(currentUser);
+            StateHasChanged();
+        }
+    }
+
+    private async Task SelectThread(string threadId)
+    {
+        selectedThreadId = threadId;
+        selectedThread = userThreads.FirstOrDefault(t => t.Id == threadId);
+        await RefreshMessages();
+    }
+
+    private async Task RefreshMessages()
+    {
+        if (!string.IsNullOrEmpty(selectedThreadId))
+        {
+            currentMessages = await AcsService.GetMessagesAsync(selectedThreadId);
+            StateHasChanged();
+        }
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrEmpty(newMessage) || currentUser == null || string.IsNullOrEmpty(selectedThreadId))
+            return;
+
+        isSendingMessage = true;
+        StateHasChanged();
+
+        try
+        {
+            var success = await AcsService.SendMessageAsync(selectedThreadId, newMessage, currentUser);
+            if (success)
+            {
+                newMessage = "";
+                await RefreshMessages();
+            }
+        }
+        finally
+        {
+            isSendingMessage = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrEmpty(newMessage))
+        {
+            await SendMessage();
+        }
+    }
+
+    private void ShowNewThreadModal()
+    {
+        showNewThreadModal = true;
+        newThreadTopic = "";
+    }
+
+    private async Task CreateNewThread()
+    {
+        if (string.IsNullOrEmpty(newThreadTopic) || currentUser == null)
+            return;
+
+        isCreatingThread = true;
+        StateHasChanged();
+
+        try
+        {
+            var newThread = await AcsService.CreateChatThreadAsync(newThreadTopic, currentUser);
+            await RefreshUserThreads();
+            
+            selectedThreadId = newThread.Id;
+            selectedThread = newThread;
+            await RefreshMessages();
+
+            showNewThreadModal = false;
+        }
+        finally
+        {
+            isCreatingThread = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetMessageCssClass(Models.ChatMessage message)
+    {
+        return message.Type switch
+        {
+            MessageType.System => "bg-light border-start border-5 border-info",
+            MessageType.CrossTenantInfo => "bg-warning-subtle border-start border-5 border-warning",
+            _ when message.SenderTenant == "Fabrikam" => "bg-warning-subtle",
+            _ => "bg-light"
+        };
+    }
+}
