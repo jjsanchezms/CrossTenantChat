@@ -1,120 +1,24 @@
-﻿@page "/"
+@page "/"
+@using Microsoft.AspNetCore.Authorization
+@attribute [AllowAnonymous]
 
-<div class="container">
-    <div class="row">
-        <div class="col-12">
-            <h1 class="display-4 text-primary mb-4">🌐 Cross-Tenant Chat Demo</h1>
-            <p class="lead">
-                Demonstrating cross-tenant authentication with Azure Communication Services and Microsoft Entra ID
+<PageTitle>Home</PageTitle>
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="hero-content text-center">
+            <span class="hero-emoji">💬</span>
+            <h1 class="hero-title">Cross-Tenant Chat Demo</h1>
+            <p class="hero-subtitle">
+                Experience seamless multi-tenant communication with Azure Communication Services. 
+                Connect users from different Azure tenants in a single, secure chat environment.
             </p>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">🏗️ Architecture Overview</h5>
-                </div>
-                <div class="card-body">
-                    <h6>🏢 Two Azure Tenants:</h6>
-                    <ul>
-                        <li><strong>Fabrikam Corp</strong> - User identity source (Entra Workforce ID)</li>
-                        <li><strong>Contoso Ltd</strong> - ACS resource host</li>
-                    </ul>
-
-                    <h6 class="mt-3">🔐 Authentication Flow:</h6>
-                    <ol>
-                        <li>User from Fabrikam logs in using Entra ID</li>
-                        <li>Token validation across tenants</li>
-                        <li>Token exchange for ACS access</li>
-                        <li>Chat session initiation</li>
-                    </ol>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0">🚀 Features Demonstrated</h5>
-                </div>
-                <div class="card-body">
-                    <ul class="list-unstyled">
-                        <li class="mb-2">
-                            <span class="badge bg-primary me-2">✅</span>
-                            Cross-tenant Entra ID authentication
-                        </li>
-                        <li class="mb-2">
-                            <span class="badge bg-primary me-2">✅</span>
-                            ACS token exchange integration
-                        </li>
-                        <li class="mb-2">
-                            <span class="badge bg-primary me-2">✅</span>
-                            Real-time chat functionality
-                        </li>
-                        <li class="mb-2">
-                            <span class="badge bg-primary me-2">✅</span>
-                            Comprehensive authentication logging
-                        </li>
-                        <li class="mb-2">
-                            <span class="badge bg-primary me-2">✅</span>
-                            Visual cross-tenant indicators
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="alert alert-info">
-                <h5>🎯 Getting Started</h5>
-                <p class="mb-2">
-                    1. Click the button below to start the authentication process<br>
-                    2. Select your tenant (Fabrikam for cross-tenant demo, Contoso for local)<br>
-                    3. Login with your Entra ID credentials<br>
-                    4. Create chat threads and experience cross-tenant messaging
-                </p>
-                <a href="/login" class="btn btn-primary">
-                    🔐 Start Authentication
+            <div class="hero-actions mt-4">
+                <a href="/login" class="btn btn-primary btn-lg shadow">
+                    Get Started
                 </a>
             </div>
         </div>
     </div>
-
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">📋 Technical Implementation</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6>🔧 Technologies Used:</h6>
-                            <ul>
-                                <li>ASP.NET Core Blazor Server</li>
-                                <li>Azure Communication Services SDK</li>
-                                <li>Microsoft Entra ID</li>
-                                <li>JWT Bearer Authentication</li>
-                                <li>Microsoft Graph SDK</li>
-                            </ul>
-                        </div>
-                        <div class="col-md-6">
-                            <h6>📦 Key Components:</h6>
-                            <ul>
-                                <li>EntraIdAuthenticationService</li>
-                                <li>AzureCommunicationService</li>
-                                <li>Cross-tenant token validation</li>
-                                <li>Real-time chat interface</li>
-                                <li>Authentication flow tracking</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+</section>

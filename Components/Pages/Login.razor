@@ -11,75 +11,93 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <div class="card">
-                <div class="card-header bg-primary text-white text-center">
-                    <h3 class="mb-0">🔐 Cross-Tenant Authentication</h3>
-                    <p class="mb-0">Azure Communication Services + Microsoft Entra ID</p>
+            <div class="card modern-login-card">
+                <div class="card-header modern-login-header">
+                    <div class="login-icon-large">🔐</div>
+                    <h3 class="mb-2">Cross-Tenant Authentication</h3>
+                    <p class="mb-0 header-subtitle">Azure Communication Services + Microsoft Entra ID</p>
                 </div>
-                <div class="card-body text-center">
-                    <h5 class="mb-4">Select Your Tenant</h5>
+                <div class="card-body modern-login-body">
+                    <h5 class="mb-4 text-center tenant-selection-title">Select Your Tenant</h5>
                     
                     @if (!string.IsNullOrEmpty(statusMessage))
                     {
-                        <div class="alert alert-info">
-                            <strong>Status:</strong> @statusMessage
+                        <div class="alert modern-alert">
+                            <div class="alert-icon">ℹ️</div>
+                            <div>
+                                <strong>Status:</strong> @statusMessage
+                            </div>
                         </div>
                     }
                     
-                    <div class="row">
-                        <div class="col-12 mb-3">
-                            <div class="card border-warning">
-                                <div class="card-body">
-                                    <h6 class="card-title">🏢 Fabrikam Corp</h6>
-                                    <p class="card-text text-muted">Cross-tenant user authentication</p>
-                                    
-                                    <!-- Direct link approach - WORKING! -->
-                                    <a href="/challenge/oidc?tenant=Fabrikam&returnUrl=@Uri.EscapeDataString(GetReturnUrl())" 
-                                       class="btn btn-warning">
-                                        Login with Fabrikam
-                                    </a>
+                    <div class="tenant-cards-container">
+                        <div class="tenant-card modern-tenant-card fabrikam-card">
+                            <div class="tenant-card-header">
+                                <div class="tenant-emoji">🏢</div>
+                                <div class="tenant-details">
+                                    <h6 class="tenant-title">Fabrikam Corp</h6>
+                                    <p class="tenant-subtitle">Cross-tenant user authentication</p>
                                 </div>
+                            </div>
+                            <div class="tenant-card-body">
+                                <a href="/challenge/oidc?tenant=Fabrikam&returnUrl=@Uri.EscapeDataString(GetReturnUrl())" 
+                                   class="btn modern-btn btn-fabrikam">
+                                    <span class="btn-icon">🌐</span>
+                                    Login with Fabrikam
+                                </a>
                             </div>
                         </div>
                         
-                        <div class="col-12 mb-3">
-                            <div class="card border-info">
-                                <div class="card-body">
-                                    <h6 class="card-title">🏛️ Contoso Ltd</h6>
-                                    <p class="card-text text-muted">ACS resource owner</p>
-                                    
-                                    <!-- Direct link approach - WORKING! -->
-                                    <a href="/challenge/oidc?tenant=Contoso&returnUrl=@Uri.EscapeDataString(GetReturnUrl())" 
-                                       class="btn btn-info">
-                                        Login with Contoso
-                                    </a>
+                        <div class="tenant-card modern-tenant-card contoso-card">
+                            <div class="tenant-card-header">
+                                <div class="tenant-emoji">🏛️</div>
+                                <div class="tenant-details">
+                                    <h6 class="tenant-title">Contoso Ltd</h6>
+                                    <p class="tenant-subtitle">ACS resource owner</p>
                                 </div>
+                            </div>
+                            <div class="tenant-card-body">
+                                <a href="/challenge/oidc?tenant=Contoso&returnUrl=@Uri.EscapeDataString(GetReturnUrl())" 
+                                   class="btn modern-btn btn-contoso">
+                                    <span class="btn-icon">🏢</span>
+                                    Login with Contoso
+                                </a>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="alert alert-info mt-3">
-                        <strong>Demo Information:</strong><br>
-                        Choose Fabrikam to demonstrate cross-tenant authentication,<br>
-                        or Contoso for local tenant authentication.<br>
-                        <small class="text-muted">Try the main buttons first, then the test buttons if needed.</small>
+                    <div class="demo-info-modern">
+                        <div class="demo-info-header">
+                            <span class="demo-info-icon">💡</span>
+                            <strong>Demo Information</strong>
+                        </div>
+                        <div class="demo-info-content">
+                            <p>Choose <strong>Fabrikam</strong> to demonstrate cross-tenant authentication, or <strong>Contoso</strong> for local tenant authentication.</p>
+                            <small>Try the main buttons first, then the test buttons if needed.</small>
+                        </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Simple debug information -->
+            <!-- Debug Information -->
             @if (debugMessages.Any())
             {
-                <div class="card mt-3">
-                    <div class="card-header d-flex justify-content-between">
-                        <h6 class="mb-0">🔍 Debug Information</h6>
-                        <button class="btn btn-sm btn-outline-secondary" @onclick="ClearDebug">Clear</button>
+                <div class="card mt-4 debug-card-modern">
+                    <div class="card-header debug-header-modern">
+                        <div class="debug-title-container">
+                            <span class="debug-icon">🔍</span>
+                            <h6 class="mb-0">Debug Information</h6>
+                        </div>
+                        <button class="btn btn-sm modern-debug-btn" @onclick="ClearDebug">Clear</button>
                     </div>
-                    <div class="card-body">
-                        <div class="font-monospace small">
+                    <div class="card-body debug-body-modern">
+                        <div class="debug-messages-modern">
                             @foreach (var msg in debugMessages.TakeLast(10))
                             {
-                                <div>[@msg.Time.ToString("HH:mm:ss")] @msg.Message</div>
+                                <div class="debug-message-item">
+                                    <span class="debug-timestamp">[@msg.Time.ToString("HH:mm:ss")]</span>
+                                    <span class="debug-text">@msg.Message</span>
+                                </div>
                             }
                         </div>
                     </div>

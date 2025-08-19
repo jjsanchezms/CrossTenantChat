@@ -1,0 +1,317 @@
+/* ===== MODERN LOGIN PAGE STYLES ===== */
+.modern-login-card {
+    border: none;
+    box-shadow: var(--shadow-lg);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: white;
+}
+
+.modern-login-header {
+    background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+    color: white;
+    text-align: center;
+    padding: 3rem 2rem;
+    border: none;
+    position: relative;
+}
+
+.modern-login-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: radial-gradient(circle at 30% 70%, rgba(255,255,255,0.1) 0%, transparent 50%),
+                      radial-gradient(circle at 70% 30%, rgba(255,255,255,0.05) 0%, transparent 50%);
+}
+
+.login-icon-large {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+    position: relative;
+    z-index: 1;
+}
+
+.modern-login-header h3 {
+    font-weight: 800;
+    font-size: 2rem;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 1;
+    margin: 0 0 0.5rem 0;
+}
+
+.header-subtitle {
+    opacity: 0.9;
+    font-weight: 400;
+    position: relative;
+    z-index: 1;
+}
+
+.modern-login-body {
+    padding: 2.5rem 2rem;
+}
+
+.tenant-selection-title {
+    font-weight: 700;
+    color: var(--gray-800);
+    font-size: 1.25rem;
+}
+
+.modern-alert {
+    display: flex;
+    align-items: flex-start;
+    padding: 1rem;
+    background: var(--primary-50);
+    border: 1px solid var(--primary-200);
+    border-radius: var(--radius-lg);
+    color: var(--primary-800);
+    margin-bottom: 2rem;
+    border-left: 4px solid var(--primary-500);
+}
+
+.alert-icon {
+    font-size: 1.25rem;
+    margin-right: 0.75rem;
+    flex-shrink: 0;
+}
+
+.tenant-cards-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.modern-tenant-card {
+    background: white;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.modern-tenant-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    transition: all 0.3s ease;
+}
+
+.fabrikam-card::before {
+    background: linear-gradient(90deg, var(--accent-orange), #f59e0b);
+}
+
+.contoso-card::before {
+    background: linear-gradient(90deg, var(--primary-400), var(--primary-500));
+}
+
+.modern-tenant-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary-300);
+}
+
+.tenant-card-header {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+.tenant-emoji {
+    font-size: 2.5rem;
+    margin-right: 1rem;
+    flex-shrink: 0;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+.tenant-details {
+    flex: 1;
+}
+
+.tenant-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin-bottom: 0.5rem;
+}
+
+.tenant-subtitle {
+    font-size: 0.9rem;
+    color: var(--gray-600);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.modern-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.875rem 1.5rem;
+    border-radius: var(--radius);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border: none;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-icon {
+    margin-right: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.btn-fabrikam {
+    background: linear-gradient(135deg, var(--accent-orange) 0%, #f59e0b 100%);
+    color: white;
+}
+
+.btn-fabrikam:hover {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-contoso {
+    background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+    color: white;
+}
+
+.btn-contoso:hover {
+    background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+    color: white;
+    text-decoration: none;
+}
+
+.demo-info-modern {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    border-left: 4px solid var(--primary-300);
+}
+
+.demo-info-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.demo-info-icon {
+    margin-right: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.demo-info-content p {
+    margin-bottom: 0.5rem;
+    color: var(--gray-700);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.demo-info-content small {
+    color: var(--gray-600);
+    font-style: italic;
+}
+
+.debug-card-modern {
+    border: 1px solid var(--gray-200);
+    box-shadow: var(--shadow);
+}
+
+.debug-header-modern {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.debug-title-container {
+    display: flex;
+    align-items: center;
+}
+
+.debug-icon {
+    margin-right: 0.5rem;
+}
+
+.modern-debug-btn {
+    background: var(--gray-200);
+    border: 1px solid var(--gray-300);
+    color: var(--gray-700);
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.modern-debug-btn:hover {
+    background: var(--gray-300);
+    color: var(--gray-800);
+}
+
+.debug-body-modern {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.debug-messages-modern {
+    font-family: var(--font-family-mono);
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+.debug-message-item {
+    margin-bottom: 0.5rem;
+    color: var(--gray-700);
+}
+
+.debug-timestamp {
+    color: var(--gray-500);
+    margin-right: 0.5rem;
+}
+
+.debug-text {
+    color: var(--gray-800);
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+    .modern-login-header {
+        padding: 2rem 1.5rem;
+    }
+    
+    .modern-login-header h3 {
+        font-size: 1.5rem;
+    }
+    
+    .modern-login-body {
+        padding: 2rem 1.5rem;
+    }
+    
+    .modern-tenant-card {
+        padding: 1.25rem;
+    }
+    
+    .tenant-emoji {
+        font-size: 2rem;
+    }
+    
+    .login-icon-large {
+        font-size: 3rem;
+    }
+}
