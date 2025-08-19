@@ -1,317 +1,692 @@
-/* ===== MODERN LOGIN PAGE STYLES ===== */
-.modern-login-card {
-    border: none;
-    box-shadow: var(--shadow-lg);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    background: white;
+/* Fluent UI Enhanced Login Page Styles */
+
+/* CSS Custom Properties for Fluent UI Design System */
+.fluent-login-container {
+    /* Fluent UI Color Palette */
+    --fluent-neutral-foreground-rest: #323130;
+    --fluent-neutral-foreground-2-rest: #605e5c;
+    --fluent-neutral-foreground-3-rest: #8a8886;
+    --fluent-neutral-foreground-on-brand: #ffffff;
+    --fluent-neutral-background-1-rest: #ffffff;
+    --fluent-neutral-background-2-rest: #faf9f8;
+    --fluent-neutral-background-3-rest: #f3f2f1;
+    --fluent-neutral-background-4-rest: #edebe9;
+    --fluent-neutral-background-5-rest: #e1dfdd;
+    --fluent-neutral-background-6-rest: #d2d0ce;
+    --fluent-neutral-stroke-1-rest: #d2d0ce;
+    --fluent-neutral-stroke-2-rest: #c8c6c4;
+    --fluent-neutral-stroke-accessible-rest: #605e5c;
+    
+    /* Brand Colors */
+    --fluent-brand-background-1-rest: #0078d4;
+    --fluent-brand-background-2-rest: #106ebe;
+    --fluent-brand-background-1-hover: #106ebe;
+    --fluent-brand-background-1-pressed: #005a9e;
+    --fluent-brand-foreground-1-rest: #0078d4;
+    --fluent-brand-foreground-1-hover: #106ebe;
+    --fluent-brand-foreground-1-pressed: #005a9e;
+    
+    /* Semantic Colors */
+    --fluent-success-background-1-rest: #107c10;
+    --fluent-success-foreground-1-rest: #107c10;
+    --fluent-warning-background-1-rest: #797775;
+    --fluent-warning-foreground-1-rest: #797775;
+    --fluent-danger-background-1-rest: #d13438;
+    --fluent-danger-foreground-1-rest: #d13438;
+    --fluent-info-background-1-rest: #0078d4;
+    --fluent-info-foreground-1-rest: #0078d4;
+    
+    /* Typography Scale */
+    --fluent-font-family-base: 'Segoe UI', system-ui, 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif;
+    --fluent-font-size-base-100: 10px;
+    --fluent-font-size-base-200: 12px;
+    --fluent-font-size-base-300: 14px;
+    --fluent-font-size-base-400: 16px;
+    --fluent-font-size-base-500: 20px;
+    --fluent-font-size-base-600: 24px;
+    --fluent-font-size-hero-700: 28px;
+    --fluent-font-size-hero-800: 32px;
+    --fluent-font-size-hero-900: 40px;
+    --fluent-font-size-hero-1000: 68px;
+    
+    --fluent-font-weight-regular: 400;
+    --fluent-font-weight-medium: 500;
+    --fluent-font-weight-semibold: 600;
+    --fluent-font-weight-bold: 700;
+    
+    --fluent-line-height-base-100: 14px;
+    --fluent-line-height-base-200: 16px;
+    --fluent-line-height-base-300: 20px;
+    --fluent-line-height-base-400: 22px;
+    --fluent-line-height-base-500: 28px;
+    --fluent-line-height-base-600: 32px;
+    --fluent-line-height-hero-700: 36px;
+    --fluent-line-height-hero-800: 40px;
+    --fluent-line-height-hero-900: 52px;
+    --fluent-line-height-hero-1000: 92px;
+    
+    /* Spacing Scale */
+    --fluent-space-horizontal-xs: 4px;
+    --fluent-space-horizontal-s-nudge: 6px;
+    --fluent-space-horizontal-s: 8px;
+    --fluent-space-horizontal-m-nudge: 10px;
+    --fluent-space-horizontal-m: 12px;
+    --fluent-space-horizontal-l: 16px;
+    --fluent-space-horizontal-xl: 20px;
+    --fluent-space-horizontal-xxl: 24px;
+    --fluent-space-horizontal-xxxl: 32px;
+    
+    --fluent-space-vertical-xs: 4px;
+    --fluent-space-vertical-s-nudge: 6px;
+    --fluent-space-vertical-s: 8px;
+    --fluent-space-vertical-m-nudge: 10px;
+    --fluent-space-vertical-m: 12px;
+    --fluent-space-vertical-l: 16px;
+    --fluent-space-vertical-xl: 20px;
+    --fluent-space-vertical-xxl: 24px;
+    --fluent-space-vertical-xxxl: 32px;
+    
+    /* Border Radius Scale */
+    --fluent-border-radius-none: 0;
+    --fluent-border-radius-small: 2px;
+    --fluent-border-radius-medium: 4px;
+    --fluent-border-radius-large: 6px;
+    --fluent-border-radius-x-large: 8px;
+    --fluent-border-radius-circular: 50%;
+    
+    /* Shadow Tokens */
+    --fluent-shadow-2: 0 0 2px rgba(0, 0, 0, 0.12), 0 2px 2px rgba(0, 0, 0, 0.14);
+    --fluent-shadow-4: 0 0 2px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.14);
+    --fluent-shadow-8: 0 0 2px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.14);
+    --fluent-shadow-16: 0 0 2px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.14);
+    --fluent-shadow-28: 0 0 8px rgba(0, 0, 0, 0.12), 0 14px 28px rgba(0, 0, 0, 0.14);
+    --fluent-shadow-64: 0 0 8px rgba(0, 0, 0, 0.12), 0 32px 64px rgba(0, 0, 0, 0.14);
+    
+    /* Animation Tokens */
+    --fluent-duration-ultra-fast: 50ms;
+    --fluent-duration-faster: 100ms;
+    --fluent-duration-fast: 150ms;
+    --fluent-duration-normal: 200ms;
+    --fluent-duration-gentle: 250ms;
+    --fluent-duration-slow: 300ms;
+    --fluent-duration-slower: 400ms;
+    --fluent-duration-ultra-slow: 500ms;
+    
+    --fluent-curve-accelerate-max: cubic-bezier(0.9, 0.1, 1, 0.2);
+    --fluent-curve-accelerate-mid: cubic-bezier(1, 0, 1, 1);
+    --fluent-curve-accelerate-min: cubic-bezier(0.8, 0, 0.78, 1);
+    --fluent-curve-decelerate-max: cubic-bezier(0.1, 0.9, 0.2, 1);
+    --fluent-curve-decelerate-mid: cubic-bezier(0, 0, 0, 1);
+    --fluent-curve-decelerate-min: cubic-bezier(0.33, 0, 0.1, 1);
+    --fluent-curve-easy-ease-max: cubic-bezier(0.8, 0, 0.2, 1);
+    --fluent-curve-easy-ease: cubic-bezier(0.33, 0, 0.67, 1);
+    --fluent-curve-linear: linear;
 }
 
-.modern-login-header {
-    background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
-    color: white;
-    text-align: center;
-    padding: 3rem 2rem;
-    border: none;
-    position: relative;
-}
-
-.modern-login-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: radial-gradient(circle at 30% 70%, rgba(255,255,255,0.1) 0%, transparent 50%),
-                      radial-gradient(circle at 70% 30%, rgba(255,255,255,0.05) 0%, transparent 50%);
-}
-
-.login-icon-large {
-    font-size: 4rem;
-    margin-bottom: 1rem;
-    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
-    position: relative;
-    z-index: 1;
-}
-
-.modern-login-header h3 {
-    font-weight: 800;
-    font-size: 2rem;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    position: relative;
-    z-index: 1;
-    margin: 0 0 0.5rem 0;
-}
-
-.header-subtitle {
-    opacity: 0.9;
-    font-weight: 400;
-    position: relative;
-    z-index: 1;
-}
-
-.modern-login-body {
-    padding: 2.5rem 2rem;
-}
-
-.tenant-selection-title {
-    font-weight: 700;
-    color: var(--gray-800);
-    font-size: 1.25rem;
-}
-
-.modern-alert {
+/* Main Container */
+.fluent-login-container {
+    min-height: 100vh;
     display: flex;
-    align-items: flex-start;
-    padding: 1rem;
-    background: var(--primary-50);
-    border: 1px solid var(--primary-200);
-    border-radius: var(--radius-lg);
-    color: var(--primary-800);
-    margin-bottom: 2rem;
-    border-left: 4px solid var(--primary-500);
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--fluent-neutral-background-2-rest) 0%, var(--fluent-neutral-background-4-rest) 100%);
+    font-family: var(--fluent-font-family-base);
+    font-size: var(--fluent-font-size-base-300);
+    line-height: var(--fluent-line-height-base-300);
+    color: var(--fluent-neutral-foreground-rest);
+    padding: var(--fluent-space-vertical-xl);
 }
 
-.alert-icon {
-    font-size: 1.25rem;
-    margin-right: 0.75rem;
-    flex-shrink: 0;
-}
-
-.tenant-cards-container {
+/* Login Content */
+.fluent-login-content {
+    width: 100%;
+    max-width: 800px;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
+    gap: var(--fluent-space-vertical-xxl);
 }
 
-.modern-tenant-card {
-    background: white;
-    border: 2px solid var(--gray-200);
-    border-radius: var(--radius-lg);
-    padding: 1.5rem;
-    transition: all 0.3s ease;
+/* Login Card */
+.fluent-login-card {
+    background: var(--fluent-neutral-background-1-rest);
+    border-radius: var(--fluent-border-radius-large);
+    box-shadow: var(--fluent-shadow-16);
+    overflow: hidden;
+    border: 1px solid var(--fluent-neutral-stroke-1-rest);
+    backdrop-filter: blur(20px);
+}
+
+/* Login Header */
+.fluent-login-header {
+    text-align: center;
+    padding: var(--fluent-space-vertical-xxxl) var(--fluent-space-horizontal-xxxl) var(--fluent-space-vertical-xxl);
+    background: linear-gradient(135deg, var(--fluent-brand-background-1-rest) 0%, var(--fluent-brand-background-1-hover) 100%);
+    color: var(--fluent-neutral-foreground-on-brand);
     position: relative;
     overflow: hidden;
 }
 
-.modern-tenant-card::before {
+.fluent-login-header::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    transition: all 0.3s ease;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: subtle-float 6s ease-in-out infinite;
 }
 
-.fabrikam-card::before {
-    background: linear-gradient(90deg, var(--accent-orange), #f59e0b);
+@keyframes subtle-float {
+    0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+    50% { transform: translate(-50%, -50%) rotate(180deg); }
 }
 
-.contoso-card::before {
-    background: linear-gradient(90deg, var(--primary-400), var(--primary-500));
-}
-
-.modern-tenant-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--primary-300);
-}
-
-.tenant-card-header {
-    display: flex;
-    align-items: flex-start;
-    margin-bottom: 1.5rem;
-}
-
-.tenant-emoji {
-    font-size: 2.5rem;
-    margin-right: 1rem;
-    flex-shrink: 0;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
-}
-
-.tenant-details {
-    flex: 1;
-}
-
-.tenant-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--gray-800);
-    margin-bottom: 0.5rem;
-}
-
-.tenant-subtitle {
-    font-size: 0.9rem;
-    color: var(--gray-600);
-    margin: 0;
-    line-height: 1.4;
-}
-
-.modern-btn {
+.fluent-login-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.875rem 1.5rem;
-    border-radius: var(--radius);
-    font-weight: 600;
-    font-size: 0.9rem;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    border: none;
-    box-shadow: var(--shadow-sm);
+    width: 64px;
+    height: 64px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: var(--fluent-border-radius-circular);
+    margin-bottom: var(--fluent-space-vertical-l);
+    position: relative;
+    z-index: 1;
+    backdrop-filter: blur(10px);
 }
 
-.btn-icon {
-    margin-right: 0.5rem;
-    font-size: 1.1rem;
+.fluent-login-icon svg {
+    color: var(--fluent-neutral-foreground-on-brand);
 }
 
-.btn-fabrikam {
-    background: linear-gradient(135deg, var(--accent-orange) 0%, #f59e0b 100%);
-    color: white;
+.fluent-login-title {
+    margin: 0 0 var(--fluent-space-vertical-s) 0;
+    font-size: var(--fluent-font-size-hero-800);
+    font-weight: var(--fluent-font-weight-semibold);
+    line-height: var(--fluent-line-height-hero-800);
+    position: relative;
+    z-index: 1;
 }
 
-.btn-fabrikam:hover {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
-    color: white;
-    text-decoration: none;
+.fluent-login-subtitle {
+    margin: 0;
+    font-size: var(--fluent-font-size-base-400);
+    font-weight: var(--fluent-font-weight-regular);
+    line-height: var(--fluent-line-height-base-400);
+    opacity: 0.9;
+    position: relative;
+    z-index: 1;
 }
 
-.btn-contoso {
-    background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
-    color: white;
+/* Login Body */
+.fluent-login-body {
+    padding: var(--fluent-space-vertical-xxxl) var(--fluent-space-horizontal-xxxl);
 }
 
-.btn-contoso:hover {
-    background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
-    color: white;
-    text-decoration: none;
+.fluent-tenant-selection-title {
+    text-align: center;
+    margin: 0 0 var(--fluent-space-vertical-xxl) 0;
+    font-size: var(--fluent-font-size-base-600);
+    font-weight: var(--fluent-font-weight-semibold);
+    color: var(--fluent-neutral-foreground-rest);
 }
 
-.demo-info-modern {
-    background: var(--gray-50);
-    border: 1px solid var(--gray-200);
-    border-radius: var(--radius-lg);
-    padding: 1.5rem;
-    border-left: 4px solid var(--primary-300);
+/* Message Bar */
+.fluent-messagebar {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--fluent-space-horizontal-m);
+    padding: var(--fluent-space-vertical-m) var(--fluent-space-horizontal-l);
+    border-radius: var(--fluent-border-radius-medium);
+    margin-bottom: var(--fluent-space-vertical-l);
+    border-left: 4px solid;
+    font-size: var(--fluent-font-size-base-300);
+    line-height: var(--fluent-line-height-base-300);
 }
 
-.demo-info-header {
+.fluent-messagebar-info {
+    background: var(--fluent-neutral-background-3-rest);
+    color: var(--fluent-info-foreground-1-rest);
+    border-left-color: var(--fluent-info-background-1-rest);
+}
+
+.fluent-messagebar-icon {
     display: flex;
     align-items: center;
-    margin-bottom: 0.75rem;
-    font-weight: 600;
-    color: var(--gray-800);
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
 }
 
-.demo-info-icon {
-    margin-right: 0.5rem;
-    font-size: 1.1rem;
+.fluent-messagebar-content {
+    flex: 1;
+    font-weight: var(--fluent-font-weight-medium);
 }
 
-.demo-info-content p {
-    margin-bottom: 0.5rem;
-    color: var(--gray-700);
-    font-size: 0.9rem;
-    line-height: 1.5;
+/* Tenant Grid */
+.fluent-tenant-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--fluent-space-horizontal-xl);
+    margin-bottom: var(--fluent-space-vertical-xxxl);
 }
 
-.demo-info-content small {
-    color: var(--gray-600);
+/* Tenant Cards */
+.fluent-tenant-card {
+    background: var(--fluent-neutral-background-2-rest);
+    border: 1px solid var(--fluent-neutral-stroke-1-rest);
+    border-radius: var(--fluent-border-radius-large);
+    padding: var(--fluent-space-vertical-xxl);
+    transition: all var(--fluent-duration-normal) var(--fluent-curve-easy-ease);
+    position: relative;
+    overflow: hidden;
+}
+
+.fluent-tenant-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--fluent-shadow-16);
+    border-color: var(--fluent-brand-background-1-rest);
+}
+
+.fluent-tenant-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--fluent-brand-background-1-rest) 0%, var(--fluent-brand-background-1-hover) 100%);
+    transform: scaleX(0);
+    transition: transform var(--fluent-duration-normal) var(--fluent-curve-easy-ease);
+}
+
+.fluent-tenant-card:hover::before {
+    transform: scaleX(1);
+}
+
+/* Tenant Header */
+.fluent-tenant-header {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--fluent-space-horizontal-l);
+    margin-bottom: var(--fluent-space-vertical-xl);
+}
+
+.fluent-tenant-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--fluent-border-radius-large);
+    flex-shrink: 0;
+}
+
+.fluent-tenant-icon.fabrikam {
+    background: linear-gradient(135deg, #00bcf2 0%, #0078d4 100%);
+    color: var(--fluent-neutral-foreground-on-brand);
+}
+
+.fluent-tenant-icon.contoso {
+    background: linear-gradient(135deg, #107c10 0%, #13a10e 100%);
+    color: var(--fluent-neutral-foreground-on-brand);
+}
+
+.fluent-tenant-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.fluent-tenant-title {
+    margin: 0 0 var(--fluent-space-vertical-xs) 0;
+    font-size: var(--fluent-font-size-base-500);
+    font-weight: var(--fluent-font-weight-semibold);
+    color: var(--fluent-neutral-foreground-rest);
+}
+
+.fluent-tenant-description {
+    margin: 0;
+    font-size: var(--fluent-font-size-base-300);
+    color: var(--fluent-neutral-foreground-2-rest);
+    line-height: var(--fluent-line-height-base-300);
+}
+
+.fluent-tenant-badge {
+    padding: var(--fluent-space-vertical-xs) var(--fluent-space-horizontal-s);
+    border-radius: var(--fluent-border-radius-small);
+    font-size: var(--fluent-font-size-base-200);
+    font-weight: var(--fluent-font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.fluent-tenant-badge.fabrikam {
+    background: rgba(0, 188, 242, 0.1);
+    color: #0078d4;
+}
+
+.fluent-tenant-badge.contoso {
+    background: rgba(16, 124, 16, 0.1);
+    color: #107c10;
+}
+
+/* Tenant Actions */
+.fluent-tenant-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--fluent-space-vertical-m);
+}
+
+/* Fluent Buttons */
+.fluent-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--fluent-space-horizontal-s);
+    padding: var(--fluent-space-vertical-m) var(--fluent-space-horizontal-l);
+    border: 1px solid transparent;
+    border-radius: var(--fluent-border-radius-medium);
+    font-family: var(--fluent-font-family-base);
+    font-size: var(--fluent-font-size-base-300);
+    font-weight: var(--fluent-font-weight-medium);
+    line-height: var(--fluent-line-height-base-300);
+    text-decoration: none;
+    cursor: pointer;
+    transition: all var(--fluent-duration-fast) var(--fluent-curve-easy-ease);
+    position: relative;
+    overflow: hidden;
+    min-height: 40px;
+    white-space: nowrap;
+    user-select: none;
+    outline: none;
+}
+
+.fluent-button:focus-visible {
+    outline: 2px solid var(--fluent-brand-background-1-rest);
+    outline-offset: 2px;
+}
+
+/* Primary Button */
+.fluent-button-primary {
+    background: var(--fluent-brand-background-1-rest);
+    color: var(--fluent-neutral-foreground-on-brand);
+    border-color: var(--fluent-brand-background-1-rest);
+}
+
+.fluent-button-primary:hover:not(:disabled) {
+    background: var(--fluent-brand-background-1-hover);
+    border-color: var(--fluent-brand-background-1-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--fluent-shadow-4);
+}
+
+.fluent-button-primary:active:not(:disabled) {
+    background: var(--fluent-brand-background-1-pressed);
+    border-color: var(--fluent-brand-background-1-pressed);
+    transform: translateY(0);
+}
+
+.fluent-button-primary:disabled {
+    background: var(--fluent-neutral-background-5-rest);
+    color: var(--fluent-neutral-foreground-3-rest);
+    border-color: var(--fluent-neutral-stroke-1-rest);
+    cursor: not-allowed;
+}
+
+/* Subtle Button */
+.fluent-button-subtle {
+    background: transparent;
+    color: var(--fluent-neutral-foreground-2-rest);
+    border-color: var(--fluent-neutral-stroke-1-rest);
+}
+
+.fluent-button-subtle:hover:not(:disabled) {
+    background: var(--fluent-neutral-background-3-rest);
+    color: var(--fluent-neutral-foreground-rest);
+    border-color: var(--fluent-neutral-stroke-2-rest);
+}
+
+.fluent-button-subtle:active:not(:disabled) {
+    background: var(--fluent-neutral-background-4-rest);
+}
+
+/* Small Button Variant */
+.fluent-button-small {
+    padding: var(--fluent-space-vertical-s) var(--fluent-space-horizontal-m);
+    font-size: var(--fluent-font-size-base-200);
+    min-height: 28px;
+}
+
+/* Spinner */
+.fluent-spinner {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fluent-spinner svg {
+    animation: spin var(--fluent-duration-ultra-slow) var(--fluent-curve-linear) infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Info Card */
+.fluent-info-card {
+    background: var(--fluent-neutral-background-3-rest);
+    border: 1px solid var(--fluent-neutral-stroke-1-rest);
+    border-radius: var(--fluent-border-radius-medium);
+    padding: var(--fluent-space-vertical-l);
+    border-left: 4px solid var(--fluent-info-background-1-rest);
+}
+
+.fluent-info-header {
+    display: flex;
+    align-items: center;
+    gap: var(--fluent-space-horizontal-s);
+    margin-bottom: var(--fluent-space-vertical-m);
+    font-weight: var(--fluent-font-weight-semibold);
+    color: var(--fluent-neutral-foreground-rest);
+}
+
+.fluent-info-header svg {
+    color: var(--fluent-info-foreground-1-rest);
+    flex-shrink: 0;
+}
+
+.fluent-info-content p {
+    margin: 0 0 var(--fluent-space-vertical-s) 0;
+    color: var(--fluent-neutral-foreground-2-rest);
+    line-height: var(--fluent-line-height-base-400);
+}
+
+.fluent-info-content p:last-child {
+    margin-bottom: 0;
+}
+
+.fluent-info-note {
+    display: block;
+    margin-top: var(--fluent-space-vertical-m);
+    padding: var(--fluent-space-vertical-s) var(--fluent-space-horizontal-m);
+    background: rgba(0, 120, 212, 0.05);
+    border-radius: var(--fluent-border-radius-small);
+    color: var(--fluent-neutral-foreground-2-rest);
     font-style: italic;
 }
 
-.debug-card-modern {
-    border: 1px solid var(--gray-200);
-    box-shadow: var(--shadow);
+/* Debug Panel */
+.fluent-debug-card {
+    background: var(--fluent-neutral-background-1-rest);
+    border: 1px solid var(--fluent-neutral-stroke-1-rest);
+    border-radius: var(--fluent-border-radius-large);
+    box-shadow: var(--fluent-shadow-4);
+    overflow: hidden;
 }
 
-.debug-header-modern {
+.fluent-debug-header {
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    align-items: center;
-    background: var(--gray-50);
-    border-bottom: 1px solid var(--gray-200);
+    padding: var(--fluent-space-vertical-l) var(--fluent-space-horizontal-l);
+    background: var(--fluent-neutral-background-2-rest);
+    border-bottom: 1px solid var(--fluent-neutral-stroke-1-rest);
 }
 
-.debug-title-container {
+.fluent-debug-title {
     display: flex;
     align-items: center;
+    gap: var(--fluent-space-horizontal-s);
+    font-weight: var(--fluent-font-weight-semibold);
+    color: var(--fluent-neutral-foreground-rest);
 }
 
-.debug-icon {
-    margin-right: 0.5rem;
+.fluent-debug-title svg {
+    color: var(--fluent-neutral-foreground-2-rest);
 }
 
-.modern-debug-btn {
-    background: var(--gray-200);
-    border: 1px solid var(--gray-300);
-    color: var(--gray-700);
-    font-weight: 500;
-    transition: all 0.2s ease;
-}
-
-.modern-debug-btn:hover {
-    background: var(--gray-300);
-    color: var(--gray-800);
-}
-
-.debug-body-modern {
+.fluent-debug-body {
     max-height: 300px;
     overflow-y: auto;
+    padding: 0;
 }
 
-.debug-messages-modern {
-    font-family: var(--font-family-mono);
-    font-size: 0.8rem;
-    line-height: 1.4;
+.fluent-debug-messages {
+    padding: var(--fluent-space-vertical-l);
 }
 
-.debug-message-item {
-    margin-bottom: 0.5rem;
-    color: var(--gray-700);
+.fluent-debug-message {
+    display: flex;
+    gap: var(--fluent-space-horizontal-m);
+    padding: var(--fluent-space-vertical-s) 0;
+    border-bottom: 1px solid var(--fluent-neutral-background-3-rest);
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: var(--fluent-font-size-base-200);
+    line-height: var(--fluent-line-height-base-300);
 }
 
-.debug-timestamp {
-    color: var(--gray-500);
-    margin-right: 0.5rem;
+.fluent-debug-message:last-child {
+    border-bottom: none;
 }
 
-.debug-text {
-    color: var(--gray-800);
+.fluent-debug-timestamp {
+    flex-shrink: 0;
+    color: var(--fluent-neutral-foreground-3-rest);
+    font-weight: var(--fluent-font-weight-medium);
+    min-width: 60px;
 }
 
-/* ===== RESPONSIVE DESIGN ===== */
+.fluent-debug-text {
+    flex: 1;
+    color: var(--fluent-neutral-foreground-2-rest);
+    word-break: break-word;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
-    .modern-login-header {
-        padding: 2rem 1.5rem;
+    .fluent-login-container {
+        padding: var(--fluent-space-vertical-l);
     }
     
-    .modern-login-header h3 {
-        font-size: 1.5rem;
+    .fluent-login-header {
+        padding: var(--fluent-space-vertical-xxl) var(--fluent-space-horizontal-l);
     }
     
-    .modern-login-body {
-        padding: 2rem 1.5rem;
+    .fluent-login-title {
+        font-size: var(--fluent-font-size-hero-700);
+        line-height: var(--fluent-line-height-hero-700);
     }
     
-    .modern-tenant-card {
-        padding: 1.25rem;
+    .fluent-login-body {
+        padding: var(--fluent-space-vertical-xl) var(--fluent-space-horizontal-l);
     }
     
-    .tenant-emoji {
-        font-size: 2rem;
+    .fluent-tenant-grid {
+        grid-template-columns: 1fr;
+        gap: var(--fluent-space-vertical-l);
     }
     
-    .login-icon-large {
-        font-size: 3rem;
+    .fluent-tenant-card {
+        padding: var(--fluent-space-vertical-l);
+    }
+    
+    .fluent-tenant-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: var(--fluent-space-vertical-m);
+    }
+    
+    .fluent-debug-body {
+        max-height: 200px;
+    }
+}
+
+@media (max-width: 480px) {
+    .fluent-login-header {
+        padding: var(--fluent-space-vertical-l);
+    }
+    
+    .fluent-login-title {
+        font-size: var(--fluent-font-size-base-600);
+        line-height: var(--fluent-line-height-base-600);
+    }
+    
+    .fluent-login-icon {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .fluent-tenant-actions {
+        gap: var(--fluent-space-vertical-s);
+    }
+    
+    .fluent-button {
+        padding: var(--fluent-space-vertical-m-nudge) var(--fluent-space-horizontal-m);
+        font-size: var(--fluent-font-size-base-200);
+    }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    .fluent-login-container {
+        --fluent-neutral-background-1-rest: #ffffff;
+        --fluent-neutral-background-2-rest: #f8f8f8;
+        --fluent-neutral-foreground-rest: #000000;
+        --fluent-neutral-stroke-1-rest: #000000;
+        --fluent-brand-background-1-rest: #0000ff;
+        --fluent-brand-background-1-hover: #0000cc;
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    .fluent-login-container * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .fluent-login-header::before {
+        animation: none;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .fluent-login-container {
+        background: white;
+        box-shadow: none;
+    }
+    
+    .fluent-login-card {
+        box-shadow: none;
+        border: 2px solid #000;
+    }
+    
+    .fluent-debug-card {
+        display: none;
     }
 }

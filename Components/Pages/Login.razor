@@ -8,102 +8,190 @@
 @inject IJSRuntime JSRuntime
 @attribute [AllowAnonymous]
 
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card modern-login-card">
-                <div class="card-header modern-login-header">
-                    <div class="login-icon-large">🔐</div>
-                    <h3 class="mb-2">Cross-Tenant Authentication</h3>
-                    <p class="mb-0 header-subtitle">Azure Communication Services + Microsoft Entra ID</p>
+<!-- Fluent UI Enhanced Login Page -->
+<div class="fluent-login-container">
+    <div class="fluent-login-content">
+        <div class="fluent-login-card">
+            <!-- Login Header -->
+            <div class="fluent-login-header">
+                <div class="fluent-login-icon">
+                    <svg width="48" height="48" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                        <path d="M5.338 1.59a61.44 61.44 0 0 0-2.837.856.481.481 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.725 10.725 0 0 0 2.287 2.233c.346.244.652.42.893.533.12.057.218.095.293.118a.55.55 0 0 0 .101.025.615.615 0 0 0 .1-.025c.076-.023.174-.061.294-.118.24-.113.547-.29.893-.533a10.726 10.726 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.775 11.775 0 0 1-2.517 2.453 7.159 7.159 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7.158 7.158 0 0 1-1.048-.625 11.777 11.777 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 62.456 62.456 0 0 1 5.072.56z"/>
+                        <path d="M10.854 5.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 7.793l2.646-2.647a.5.5 0 0 1 .708 0z"/>
+                    </svg>
                 </div>
-                <div class="card-body modern-login-body">
-                    <h5 class="mb-4 text-center tenant-selection-title">Select Your Tenant</h5>
-                    
-                    @if (!string.IsNullOrEmpty(statusMessage))
-                    {
-                        <div class="alert modern-alert">
-                            <div class="alert-icon">ℹ️</div>
-                            <div>
-                                <strong>Status:</strong> @statusMessage
+                <h1 class="fluent-login-title">Welcome Back</h1>
+                <p class="fluent-login-subtitle">Choose your organization to continue to Cross-Tenant Chat</p>
+            </div>
+            
+            <!-- Status Messages -->
+            @if (!string.IsNullOrEmpty(statusMessage))
+            {
+                <div class="fluent-messagebar fluent-messagebar-info">
+                    <div class="fluent-messagebar-icon">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+                        </svg>
+                    </div>
+                    <div class="fluent-messagebar-content">@statusMessage</div>
+                </div>
+            }
+            
+            <!-- Tenant Selection -->
+            <div class="fluent-login-body">
+                <h2 class="fluent-tenant-selection-title">Select Organization</h2>
+                
+                <div class="fluent-tenant-grid">
+                    <!-- Fabrikam Tenant Card -->
+                    <div class="fluent-tenant-card">
+                        <div class="fluent-tenant-header">
+                            <div class="fluent-tenant-icon fabrikam">
+                                <svg width="24" height="24" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                                    <path d="M2.5 3A1.5 1.5 0 0 0 1 4.5v.793c.026.009.051.02.076.032L7.674 8.51c.206.1.446.1.652 0l6.598-3.185A.755.755 0 0 1 15 5.293V4.5A1.5 1.5 0 0 0 13.5 3h-11Z"/>
+                                    <path d="M15 6.954 8.978 9.86a2.25 2.25 0 0 1-1.956 0L1 6.954V11.5A1.5 1.5 0 0 0 2.5 13h11a1.5 1.5 0 0 0 1.5-1.5V6.954Z"/>
+                                </svg>
                             </div>
-                        </div>
-                    }
-                    
-                    <div class="tenant-cards-container">
-                        <div class="tenant-card modern-tenant-card fabrikam-card">
-                            <div class="tenant-card-header">
-                                <div class="tenant-emoji">🏢</div>
-                                <div class="tenant-details">
-                                    <h6 class="tenant-title">Fabrikam Corp</h6>
-                                    <p class="tenant-subtitle">Cross-tenant user authentication</p>
-                                </div>
+                            <div class="fluent-tenant-details">
+                                <h3 class="fluent-tenant-title">Fabrikam Corporation</h3>
+                                <p class="fluent-tenant-description">Cross-tenant guest authentication</p>
                             </div>
-                            <div class="tenant-card-body">
-                                <a href="/challenge/oidc?tenant=Fabrikam&returnUrl=@Uri.EscapeDataString(GetReturnUrl())" 
-                                   class="btn modern-btn btn-fabrikam">
-                                    <span class="btn-icon">🌐</span>
-                                    Login with Fabrikam
-                                </a>
-                            </div>
+                            <div class="fluent-tenant-badge fabrikam">Guest</div>
                         </div>
                         
-                        <div class="tenant-card modern-tenant-card contoso-card">
-                            <div class="tenant-card-header">
-                                <div class="tenant-emoji">🏛️</div>
-                                <div class="tenant-details">
-                                    <h6 class="tenant-title">Contoso Ltd</h6>
-                                    <p class="tenant-subtitle">ACS resource owner</p>
-                                </div>
-                            </div>
-                            <div class="tenant-card-body">
-                                <a href="/challenge/oidc?tenant=Contoso&returnUrl=@Uri.EscapeDataString(GetReturnUrl())" 
-                                   class="btn modern-btn btn-contoso">
-                                    <span class="btn-icon">🏢</span>
-                                    Login with Contoso
-                                </a>
-                            </div>
+                        <div class="fluent-tenant-actions">
+                            <button class="fluent-button fluent-button-primary" 
+                                    disabled="@isProcessing"
+                                    @onclick="@(() => LoginWithTenant("Fabrikam"))">
+                                @if (isProcessing && selectedTenant == "Fabrikam")
+                                {
+                                    <div class="fluent-spinner">
+                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                            <path d="M8 0a8 8 0 0 1 8 8 .5.5 0 0 1-1 0 7 7 0 1 0-7 7 .5.5 0 0 1 0 1A8 8 0 0 1 8 0z"/>
+                                        </svg>
+                                    </div>
+                                    <span>Connecting...</span>
+                                }
+                                else
+                                {
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0v-2z"/>
+                                        <path fill-rule="evenodd" d="M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
+                                    </svg>
+                                    <span>Sign in with Fabrikam</span>
+                                }
+                            </button>
+                            
+                            <button class="fluent-button fluent-button-subtle" @onclick="@(() => TestClick("Fabrikam"))">>
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                                    <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5v-2z"/>
+                                </svg>
+                                Test Connection
+                            </button>
                         </div>
                     </div>
                     
-                    <div class="demo-info-modern">
-                        <div class="demo-info-header">
-                            <span class="demo-info-icon">💡</span>
-                            <strong>Demo Information</strong>
+                    <!-- Contoso Tenant Card -->
+                    <div class="fluent-tenant-card">
+                        <div class="fluent-tenant-header">
+                            <div class="fluent-tenant-icon contoso">
+                                <svg width="24" height="24" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                                    <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7Zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm-5.784 6A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h4.216ZM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/>
+                                </svg>
+                            </div>
+                            <div class="fluent-tenant-details">
+                                <h3 class="fluent-tenant-title">Contoso Limited</h3>
+                                <p class="fluent-tenant-description">Home tenant with ACS resources</p>
+                            </div>
+                            <div class="fluent-tenant-badge contoso">Owner</div>
                         </div>
-                        <div class="demo-info-content">
-                            <p>Choose <strong>Fabrikam</strong> to demonstrate cross-tenant authentication, or <strong>Contoso</strong> for local tenant authentication.</p>
-                            <small>Try the main buttons first, then the test buttons if needed.</small>
+                        
+                        <div class="fluent-tenant-actions">
+                            <button class="fluent-button fluent-button-primary" 
+                                    disabled="@isProcessing"
+                                    @onclick="@(() => LoginWithTenant("Contoso"))">
+                                @if (isProcessing && selectedTenant == "Contoso")
+                                {
+                                    <div class="fluent-spinner">
+                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                            <path d="M8 0a8 8 0 0 1 8 8 .5.5 0 0 1-1 0 7 7 0 1 0-7 7 .5.5 0 0 1 0 1A8 8 0 0 1 8 0z"/>
+                                        </svg>
+                                    </div>
+                                    <span>Connecting...</span>
+                                }
+                                else
+                                {
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0v-2z"/>
+                                        <path fill-rule="evenodd" d="M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
+                                    </svg>
+                                    <span>Sign in with Contoso</span>
+                                }
+                            </button>
+                            
+                            <button class="fluent-button fluent-button-subtle" @onclick="@(() => TestClick("Contoso"))">>
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                                    <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5v-2z"/>
+                                </svg>
+                                Test Connection
+                            </button>
                         </div>
+                    </div>
+                </div>
+                
+                <!-- Demo Information -->
+                <div class="fluent-info-card">
+                    <div class="fluent-info-header">
+                        <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                            <path d="m9.708 6.075-3.024.379-.108.502.595.108c.387.093.464.232.38.619l-.975 4.577c-.255 1.183.14 1.74 1.067 1.74.72 0 1.554-.332 1.933-.789l.116-.549c-.263.232-.65.325-.905.325-.363 0-.494-.255-.402-.704l1.323-6.208Zm.091-2.755a1.32 1.32 0 1 1-2.64 0 1.32 1.32 0 0 1 2.64 0Z"/>
+                        </svg>
+                        <strong>Demo Guide</strong>
+                    </div>
+                    <div class="fluent-info-content">
+                        <p>
+                            <strong>Fabrikam:</strong> Demonstrates cross-tenant authentication where external users can join chats hosted in the Contoso tenant.
+                        </p>
+                        <p>
+                            <strong>Contoso:</strong> The home tenant that owns the Azure Communication Services resources and hosts the chat infrastructure.
+                        </p>
+                        <small class="fluent-info-note">
+                            💡 Try the main sign-in buttons first. Use test buttons if you encounter authentication issues.
+                        </small>
                     </div>
                 </div>
             </div>
-            
-            <!-- Debug Information -->
-            @if (debugMessages.Any())
-            {
-                <div class="card mt-4 debug-card-modern">
-                    <div class="card-header debug-header-modern">
-                        <div class="debug-title-container">
-                            <span class="debug-icon">🔍</span>
-                            <h6 class="mb-0">Debug Information</h6>
-                        </div>
-                        <button class="btn btn-sm modern-debug-btn" @onclick="ClearDebug">Clear</button>
+        </div>
+        
+        <!-- Debug Panel -->
+        @if (debugMessages.Any())
+        {
+            <div class="fluent-debug-card">
+                <div class="fluent-debug-header">
+                    <div class="fluent-debug-title">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                            <path d="M4.5 1a.5.5 0 0 1 .5.5V2h6v-.5a.5.5 0 0 1 1 0V2h.5A1.5 1.5 0 0 1 14 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 12.5v-9A1.5 1.5 0 0 1 3.5 2H4v-.5a.5.5 0 0 1 .5-.5zM3.5 3a.5.5 0 0 0-.5.5V4h10v-.5a.5.5 0 0 0-.5-.5h-9zM3 5v7.5a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5V5H3z"/>
+                        </svg>
+                        Debug Information
                     </div>
-                    <div class="card-body debug-body-modern">
-                        <div class="debug-messages-modern">
-                            @foreach (var msg in debugMessages.TakeLast(10))
-                            {
-                                <div class="debug-message-item">
-                                    <span class="debug-timestamp">[@msg.Time.ToString("HH:mm:ss")]</span>
-                                    <span class="debug-text">@msg.Message</span>
-                                </div>
-                            }
-                        </div>
+                    <button class="fluent-button fluent-button-subtle fluent-button-small" @onclick="ClearDebug">
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L8 7.293 5.354 4.646a.5.5 0 0 1 0-.708z"/>
+                        </svg>
+                        Clear
+                    </button>
+                </div>
+                <div class="fluent-debug-body">
+                    <div class="fluent-debug-messages">
+                        @foreach (var msg in debugMessages.TakeLast(10))
+                        {
+                            <div class="fluent-debug-message">
+                                <span class="fluent-debug-timestamp">[@msg.Time.ToString("HH:mm:ss")]</span>
+                                <span class="fluent-debug-text">@msg.Message</span>
+                            </div>
+                        }
                     </div>
                 </div>
-            }
-        </div>
+            </div>
+        }
     </div>
 </div>
 
@@ -145,7 +233,7 @@
     {
         AddDebugMessage($"🧪 Test button clicked for {tenant}");
         Logger.LogInformation("🧪 Test button clicked for tenant: {Tenant}", tenant);
-        statusMessage = $"Test button click registered for {tenant}!";
+        statusMessage = $"Test connection successful for {tenant}!";
         StateHasChanged();
     }
 
