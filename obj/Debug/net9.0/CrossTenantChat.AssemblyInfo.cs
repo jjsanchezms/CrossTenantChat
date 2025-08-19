@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CrossTenantChat")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f20d3f1f8b0137cb073ec2c3d29c35c763ff4dbf")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+82e2762b9892cff265309b3f90c2e892a91dee3f")]
 [assembly: System.Reflection.AssemblyProductAttribute("CrossTenantChat")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CrossTenantChat")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -63,26 +63,6 @@
                         <p class="mb-1 text-muted small">@currentUser?.Email</p>
                         <p class="mb-1"><span class="badge @(currentUser?.IsFromFabrikam == true ? "bg-warning" : "bg-info")">@currentUser?.TenantName</span></p>
                         <p class="mb-0 text-muted small">ACS ID: @currentUser?.AcsUserId</p>
-                        
-                        @if (authFlow != null)
-                        {
-                            <hr>
-                            <h6>Authentication Flow:</h6>
-                            @foreach (var step in authFlow.Steps)
-                            {
-                                <div class="small mb-1">
-                                    @if (step.IsSuccessful)
-                                    {
-                                        <span class="text-success">✅</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-danger">❌</span>
-                                    }
-                                    @step.StepName
-                                </div>
-                            }
-                        }
                     </div>
                 </div>
 
@@ -245,9 +225,7 @@
     public Task<AuthenticationState>? AuthenticationStateTask { get; set; }
 
     private ChatUser? currentUser;
-    private CrossTenantAuthenticationFlow? authFlow;
     private bool isLoading = true;
-    private bool isAuthenticating = false;
 
     private List<ChatThread> userThreads = new();
     private string selectedThreadId = "";

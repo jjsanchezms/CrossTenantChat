@@ -236,15 +236,6 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
     app.UseHttpsRedirection();
 }
-else
-{
-    // In development, only use HTTPS redirection if HTTPS is configured
-    var urls = builder.Configuration["ASPNETCORE_URLS"] ?? "";
-    if (urls.Contains("https") || app.Urls.Any(u => u.StartsWith("https")))
-    {
-        app.UseHttpsRedirection();
-    }
-}
 
 // Enable static files serving
 app.UseStaticFiles();
