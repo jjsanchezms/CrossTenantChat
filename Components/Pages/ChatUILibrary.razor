@@ -1,0 +1,362 @@
+@page "/chat-ui-library"
+@using Microsoft.AspNetCore.Authorization
+@using CrossTenantChat.Services
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@inject ILogger<ChatUILibrary> Logger
+@inject IAzureCommunicationService AcsService
+@inject IJSRuntime JSRuntime
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [AllowAnonymous]
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2>💬 Azure Communication UI Library Chat</h2>
+                <div>
+                    @if (currentUser?.Identity?.IsAuthenticated == true)
+                    {
+                        <span class="badge bg-success me-2">
+                            👤 @(currentUser.Identity.Name ?? "Demo User")
+                        </span>
+                        <span class="badge bg-info me-2">
+                            🏢 @(currentUser.FindFirst("tenant")?.Value ?? "Unknown")
+                        </span>
+                        <a href="/logout" class="btn btn-outline-secondary btn-sm">Logout</a>
+                    }
+                    else
+                    {
+                        <a href="/login" class="btn btn-primary btn-sm">Login</a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (currentUser?.Identity?.IsAuthenticated != true)
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <h5>🔐 Authentication Required</h5>
+                    <p>Please login to access the chat functionality.</p>
+                    <a href="/login" class="btn btn-primary">Go to Login</a>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-md-8">
+                <!-- Azure Communication UI Library Chat Container -->
+                <div id="communication-ui-container" style="height: 600px; border: 1px solid #dee2e6; border-radius: 0.375rem;">
+                    @if (isLoading)
+                    {
+                        <div class="d-flex justify-content-center align-items-center h-100">
+                            <div class="text-center">
+                                <div class="spinner-border text-primary mb-3" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <div>Initializing chat...</div>
+                                <small class="text-muted">Getting ACS token and setting up UI components</small>
+                            </div>
+                        </div>
+                    }
+                    else if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger m-3">
+                            <h6>❌ Initialization Error</h6>
+                            <p>@errorMessage</p>
+                            <button class="btn btn-outline-danger btn-sm" @onclick="InitializeChat">
+                                🔄 Retry
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <!-- Chat Controls and Information -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">🎛️ Chat Controls</h6>
+                    </div>
+                    <div class="card-body">
+                        @if (!string.IsNullOrEmpty(acsToken))
+                        {
+                            <div class="mb-3">
+                                <label class="form-label">Thread ID:</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control form-control-sm" @bind="threadId" placeholder="Enter existing thread ID (optional)" />
+                                    <button class="btn btn-outline-primary btn-sm" @onclick="JoinThread">Join</button>
+                                </div>
+                                <small class="form-text text-muted">Leave empty to create new thread</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <button class="btn btn-success btn-sm w-100" @onclick="StartNewThread">
+                                    🆕 Start New Thread
+                                </button>
+                            </div>
+                            
+                            @if (!string.IsNullOrEmpty(currentThreadId))
+                            {
+                                <div class="alert alert-info">
+                                    <small><strong>Current Thread:</strong><br/>@currentThreadId</small>
+                                </div>
+                            }
+                        }
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Display Name:</label>
+                            <input type="text" class="form-control form-control-sm" @bind="displayName" />
+                        </div>
+                        
+                        <div class="mb-3">
+                            <button class="btn btn-primary btn-sm w-100" @onclick="InitializeChat" disabled="@isLoading">
+                                @if (isLoading)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-1"></span>
+                                }
+                                🔄 @(isLoading ? "Initializing..." : "Restart Chat")
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Debug Information -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">🔍 Debug Info</h6>
+                    </div>
+                    <div class="card-body">
+                        <small class="font-monospace">
+                            <div><strong>User ID:</strong> @userId</div>
+                            <div><strong>Tenant:</strong> @(currentUser?.FindFirst("tenant")?.Value ?? "N/A")</div>
+                            <div><strong>Token Status:</strong> @(string.IsNullOrEmpty(acsToken) ? "❌ Not obtained" : "✅ Obtained")</div>
+                            <div><strong>Endpoint:</strong> @acsEndpoint</div>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Include Azure Communication UI Library -->
+<script src="https://unpkg.com/@@azure/communication-react@1.15.0/dist/dist-esm/index.js" type="module"></script>
+
+@code {
+    private bool isLoading = false;
+    private string errorMessage = "";
+    private string acsToken = "";
+    private string acsEndpoint = "";
+    private string userId = "";
+    private string displayName = "";
+    private string threadId = "";
+    private string currentThreadId = "";
+    private ClaimsPrincipal? currentUser;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        currentUser = authState.User;
+
+        if (currentUser?.Identity?.IsAuthenticated == true)
+        {
+            userId = currentUser.FindFirst("sub")?.Value ?? currentUser.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.NewGuid().ToString();
+            displayName = currentUser.FindFirst("name")?.Value ?? currentUser.Identity.Name ?? $"User ({currentUser.FindFirst("tenant")?.Value ?? "Unknown"})";
+            
+            Logger.LogInformation("Chat UI Library page initialized for user: {UserId}, Display: {DisplayName}", userId, displayName);
+            
+            // Auto-initialize on page load
+            await InitializeChat();
+        }
+    }
+
+    private async Task InitializeChat()
+    {
+        if (currentUser?.Identity?.IsAuthenticated != true)
+        {
+            errorMessage = "User not authenticated";
+            return;
+        }
+
+        isLoading = true;
+        errorMessage = "";
+        StateHasChanged();
+
+        try
+        {
+            Logger.LogInformation("🚀 Initializing Azure Communication Services for user: {UserId}", userId);
+
+            // Get ACS token
+            var tokenResult = await AcsService.GetCommunicationUserTokenAsync(userId);
+            
+            acsToken = tokenResult.Token;
+            acsEndpoint = "https://acsresourcecontoso.unitedstates.communication.azure.com/"; // From config
+            
+            Logger.LogInformation("✅ ACS token obtained successfully");
+
+            // Initialize the UI Library with JavaScript
+            await InitializeUILibrary();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Failed to initialize chat: {Error}", ex.Message);
+            errorMessage = $"Failed to initialize chat: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task StartNewThread()
+    {
+        try
+        {
+            Logger.LogInformation("🆕 Creating new chat thread");
+            
+            var thread = await AcsService.CreateChatThreadAsync($"Cross-tenant chat - {displayName}", new[] { userId });
+            if (thread != null)
+            {
+                currentThreadId = thread.Id;
+                threadId = thread.Id;
+                Logger.LogInformation("✅ New thread created: {ThreadId}", currentThreadId);
+                
+                // Reinitialize UI with new thread
+                await InitializeUILibrary();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Failed to create new thread: {Error}", ex.Message);
+            errorMessage = $"Failed to create thread: {ex.Message}";
+        }
+        
+        StateHasChanged();
+    }
+
+    private async Task JoinThread()
+    {
+        if (string.IsNullOrEmpty(threadId))
+        {
+            await StartNewThread();
+            return;
+        }
+
+        currentThreadId = threadId;
+        await InitializeUILibrary();
+    }
+
+    private async Task InitializeUILibrary()
+    {
+        if (string.IsNullOrEmpty(acsToken))
+        {
+            Logger.LogWarning("⚠️ Cannot initialize UI Library without ACS token");
+            return;
+        }
+
+        try
+        {
+            // Use the thread ID if available, otherwise create a new one
+            var activeThreadId = !string.IsNullOrEmpty(currentThreadId) ? currentThreadId : await CreateNewThreadId();
+
+            Logger.LogInformation("🎨 Initializing Communication UI Library with thread: {ThreadId}", activeThreadId);
+
+            // Initialize the Azure Communication UI Library via JavaScript
+            await JSRuntime.InvokeVoidAsync("initializeCommunicationUI", new
+            {
+                token = acsToken,
+                endpoint = acsEndpoint,
+                userId = userId,
+                displayName = displayName,
+                threadId = activeThreadId,
+                containerId = "communication-ui-container"
+            });
+
+            currentThreadId = activeThreadId;
+            Logger.LogInformation("✅ Communication UI Library initialized successfully");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Failed to initialize UI Library: {Error}", ex.Message);
+            errorMessage = $"UI Library initialization failed: {ex.Message}";
+        }
+    }
+
+    private async Task<string> CreateNewThreadId()
+    {
+        try
+        {
+            var thread = await AcsService.CreateChatThreadAsync($"Chat - {displayName}", new[] { userId });
+            return thread?.Id ?? Guid.NewGuid().ToString();
+        }
+        catch
+        {
+            return Guid.NewGuid().ToString(); // Fallback
+        }
+    }
+}
+
+<script>
+    window.initializeCommunicationUI = async function(config) {
+        console.log('🚀 Initializing Azure Communication UI Library', config);
+        
+        try {
+            // Import the UI Library (this is a simplified approach)
+            // In a real implementation, you'd bundle this properly
+            
+            const container = document.getElementById(config.containerId);
+            if (!container) {
+                throw new Error('Container not found: ' + config.containerId);
+            }
+            
+            // Clear container
+            container.innerHTML = '';
+            
+            // For now, create a placeholder that shows the integration is working
+            // In a real implementation, you'd use the actual UI Library components
+            container.innerHTML = `
+                <div style="padding: 20px; text-align: center; background: #f8f9fa; border-radius: 8px; margin: 20px;">
+                    <h5>🎉 Azure Communication UI Library</h5>
+                    <p><strong>Ready for Integration!</strong></p>
+                    <div style="background: white; padding: 15px; border-radius: 4px; margin: 10px 0; text-align: left;">
+                        <div><strong>Token:</strong> ${config.token.substring(0, 20)}...</div>
+                        <div><strong>User:</strong> ${config.displayName} (${config.userId})</div>
+                        <div><strong>Thread:</strong> ${config.threadId}</div>
+                        <div><strong>Endpoint:</strong> ${config.endpoint}</div>
+                    </div>
+                    <p><em>This is where the CallWithChatComposite would be rendered</em></p>
+                    <div style="background: #e3f2fd; padding: 10px; border-radius: 4px; margin-top: 15px;">
+                        <small>
+                            <strong>Next Steps:</strong><br/>
+                            1. Install @@azure/communication-react npm package<br/>
+                            2. Set up proper React integration<br/>
+                            3. Replace this placeholder with CallWithChatComposite
+                        </small>
+                    </div>
+                </div>
+            `;
+            
+            console.log('✅ UI Library placeholder initialized');
+            
+        } catch (error) {
+            console.error('❌ Failed to initialize UI Library:', error);
+            
+            const container = document.getElementById(config.containerId);
+            if (container) {
+                container.innerHTML = `
+                    <div style="padding: 20px; text-align: center; color: red;">
+                        <h6>❌ Initialization Error</h6>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+    };
+</script>

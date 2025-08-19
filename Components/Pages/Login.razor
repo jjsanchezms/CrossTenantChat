@@ -5,11 +5,12 @@
 @using System.Security.Claims
 @inject NavigationManager Navigation
 @inject ILogger<Login> Logger
+@inject IJSRuntime JSRuntime
 @attribute [AllowAnonymous]
 
 <div class="container">
     <div class="row justify-content-center">
-        <div class="col-md-6">
+        <div class="col-md-8">
             <div class="card">
                 <div class="card-header bg-primary text-white text-center">
                     <h3 class="mb-0">🔐 Cross-Tenant Authentication</h3>
@@ -18,15 +19,25 @@
                 <div class="card-body text-center">
                     <h5 class="mb-4">Select Your Tenant</h5>
                     
+                    @if (!string.IsNullOrEmpty(statusMessage))
+                    {
+                        <div class="alert alert-info">
+                            <strong>Status:</strong> @statusMessage
+                        </div>
+                    }
+                    
                     <div class="row">
                         <div class="col-12 mb-3">
                             <div class="card border-warning">
                                 <div class="card-body">
                                     <h6 class="card-title">🏢 Fabrikam Corp</h6>
                                     <p class="card-text text-muted">Cross-tenant user authentication</p>
-                                    <button class="btn btn-warning" @onclick='() => LoginWithTenant("Fabrikam")'>
+                                    
+                                    <!-- Direct link approach - WORKING! -->
+                                    <a href="/challenge/oidc?tenant=Fabrikam&returnUrl=@Uri.EscapeDataString(GetReturnUrl())" 
+                                       class="btn btn-warning">
                                         Login with Fabrikam
-                                    </button>
+                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -36,9 +47,12 @@
                                 <div class="card-body">
                                     <h6 class="card-title">🏛️ Contoso Ltd</h6>
                                     <p class="card-text text-muted">ACS resource owner</p>
-                                    <button class="btn btn-info" @onclick='() => LoginWithTenant("Contoso")'>
+                                    
+                                    <!-- Direct link approach - WORKING! -->
+                                    <a href="/challenge/oidc?tenant=Contoso&returnUrl=@Uri.EscapeDataString(GetReturnUrl())" 
+                                       class="btn btn-info">
                                         Login with Contoso
-                                    </button>
+                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -47,10 +61,30 @@
                     <div class="alert alert-info mt-3">
                         <strong>Demo Information:</strong><br>
                         Choose Fabrikam to demonstrate cross-tenant authentication,<br>
-                        or Contoso for local tenant authentication.
+                        or Contoso for local tenant authentication.<br>
+                        <small class="text-muted">Try the main buttons first, then the test buttons if needed.</small>
                     </div>
                 </div>
             </div>
+            
+            <!-- Simple debug information -->
+            @if (debugMessages.Any())
+            {
+                <div class="card mt-3">
+                    <div class="card-header d-flex justify-content-between">
+                        <h6 class="mb-0">🔍 Debug Information</h6>
+                        <button class="btn btn-sm btn-outline-secondary" @onclick="ClearDebug">Clear</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="font-monospace small">
+                            @foreach (var msg in debugMessages.TakeLast(10))
+                            {
+                                <div>[@msg.Time.ToString("HH:mm:ss")] @msg.Message</div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
     </div>
 </div>
@@ -60,36 +94,112 @@
     [SupplyParameterFromQuery(Name = "returnUrl")]
     public string? ReturnUrl { get; set; }
 
+    private bool isProcessing = false;
+    private string? selectedTenant = null;
+    private string statusMessage = "";
+    
+    private List<DebugMessage> debugMessages = new();
+    
+    public class DebugMessage
+    {
+        public DateTime Time { get; set; } = DateTime.Now;
+        public string Message { get; set; } = "";
+    }
+
+    private string GetReturnUrl()
+    {
+        return !string.IsNullOrEmpty(ReturnUrl) ? ReturnUrl : "/chat";
+    }
+
+    private void AddDebugMessage(string message)
+    {
+        debugMessages.Add(new DebugMessage { Message = message });
+        InvokeAsync(StateHasChanged);
+    }
+    
+    private void ClearDebug()
+    {
+        debugMessages.Clear();
+        StateHasChanged();
+    }
+
+    private void TestClick(string tenant)
+    {
+        AddDebugMessage($"🧪 Test button clicked for {tenant}");
+        Logger.LogInformation("🧪 Test button clicked for tenant: {Tenant}", tenant);
+        statusMessage = $"Test button click registered for {tenant}!";
+        StateHasChanged();
+    }
+
     private async Task LoginWithTenant(string tenant)
     {
-        Logger.LogInformation("Initiating login for tenant: {Tenant}", tenant);
-        
-        // Store the selected tenant in session/state for later use
-        var properties = new AuthenticationProperties();
-        
-        // Set the tenant-specific authority based on selection
-        if (tenant == "Fabrikam")
+        if (isProcessing) 
         {
-            // This would normally redirect to Fabrikam's Entra ID
-            // For now, we'll use a single tenant approach and simulate the difference
-            properties.Items["tenant"] = "Fabrikam";
-            properties.Items["tenant_id"] = "307083d3-52ba-4934-a29a-97cefcedc6a6";
-        }
-        else
-        {
-            properties.Items["tenant"] = "Contoso";
-            properties.Items["tenant_id"] = "8c7f97d6-f873-4732-a074-8d2ab93da886";
+            AddDebugMessage("⚠️ Already processing, ignoring click");
+            return;
         }
         
-        if (!string.IsNullOrEmpty(ReturnUrl))
+        isProcessing = true;
+        selectedTenant = tenant;
+        statusMessage = $"Initiating authentication with {tenant}...";
+        StateHasChanged();
+        
+        AddDebugMessage($"🚀 Login button clicked for tenant: {tenant}");
+        Logger.LogInformation("🚀 Initiating login for tenant: {Tenant}", tenant);
+        
+        try
         {
-            properties.RedirectUri = ReturnUrl;
+            AddDebugMessage("📋 Creating authentication properties...");
+            
+            // Set the tenant-specific authority based on selection
+            if (tenant == "Fabrikam")
+            {
+                AddDebugMessage("🏢 Configuring Fabrikam tenant authentication");
+            }
+            else
+            {
+                AddDebugMessage("🏛️ Configuring Contoso tenant authentication");
+            }
+            
+            string returnUrl = GetReturnUrl();
+            AddDebugMessage($"📍 Return URL: {returnUrl}");
+            
+            var challengeUrl = $"/challenge/oidc?tenant={tenant}&returnUrl={Uri.EscapeDataString(returnUrl)}";
+            AddDebugMessage($"🌐 Challenge URL: {challengeUrl}");
+            
+            statusMessage = $"Redirecting to {tenant} authentication...";
+            StateHasChanged();
+            
+            // Add a small delay to show the loading state
+            await Task.Delay(100);
+            
+            AddDebugMessage("✅ Initiating navigation with forceLoad=true");
+            
+            // Log the navigation attempt
+            Logger.LogInformation("🌐 Navigating to challenge URL: {ChallengeUrl}", challengeUrl);
+            
+            // Use JavaScript to navigate to avoid Blazor routing issues
+            await JSRuntime.InvokeVoidAsync("window.location.assign", challengeUrl);
         }
-        else
+        catch (Exception ex)
         {
-            properties.RedirectUri = "/chat";
+            AddDebugMessage($"❌ Error during login process: {ex.Message}");
+            Logger.LogError(ex, "❌ Error during login process for tenant {Tenant}", tenant);
+            statusMessage = $"Error: {ex.Message}";
         }
+        finally
+        {
+            // Don't reset these immediately as we're navigating away
+            // isProcessing = false;
+            // selectedTenant = null;
+        }
+    }
 
-        Navigation.NavigateTo($"/challenge/oidc?tenant={tenant}&returnUrl={Uri.EscapeDataString(properties.RedirectUri)}", forceLoad: true);
+    protected override void OnInitialized()
+    {
+        Logger.LogInformation("🎨 Login page initialized with ReturnUrl: {ReturnUrl}", ReturnUrl ?? "null");
+        AddDebugMessage($"🎨 Login page initialized");
+        AddDebugMessage($"📝 Return URL parameter: {ReturnUrl ?? "not provided"}");
+        AddDebugMessage($"🌐 Current URL: {Navigation.Uri}");
     }
 }

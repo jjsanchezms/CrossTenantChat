@@ -1,0 +1,116 @@
+@using Microsoft.Extensions.Logging
+@implements IDisposable
+@inject ILogger<InPageLogger> Logger
+@inject IJSRuntime JSRuntime
+
+<div class="card mt-3" style="max-height: 400px; overflow-y: auto;">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">🔍 Debug Logs</h6>
+        <button class="btn btn-sm btn-outline-secondary" @onclick="ClearLogs">Clear</button>
+    </div>
+    <div class="card-body p-2">
+        <div class="font-monospace small" id="debug-logs">
+            @foreach (var log in _logs)
+            {
+                <div class="@GetLogClass(log.Level)">
+                    <span class="text-muted">[@log.Timestamp.ToString("HH:mm:ss.fff")]</span>
+                    <span class="fw-bold">[@log.Level.ToString().ToUpper()]</span>
+                    @log.Message
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private readonly List<LogEntry> _logs = new();
+    private readonly object _lockObject = new();
+    
+    public class LogEntry
+    {
+        public DateTime Timestamp { get; set; }
+        public LogLevel Level { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public string? Category { get; set; }
+    }
+
+    protected override void OnInitialized()
+    {
+        AddLog(LogLevel.Information, "InPageLogger initialized");
+    }
+
+    public void AddLog(LogLevel level, string message, string? category = null)
+    {
+        lock (_lockObject)
+        {
+            _logs.Add(new LogEntry
+            {
+                Timestamp = DateTime.Now,
+                Level = level,
+                Message = message,
+                Category = category
+            });
+            
+            // Keep only last 100 entries
+            if (_logs.Count > 100)
+            {
+                _logs.RemoveAt(0);
+            }
+        }
+        
+        InvokeAsync(StateHasChanged);
+        InvokeAsync(() => ScrollToBottom());
+    }
+
+    public void LogDebug(string message) => AddLog(LogLevel.Debug, message);
+    public void LogInfo(string message) => AddLog(LogLevel.Information, message);
+    public void LogWarning(string message) => AddLog(LogLevel.Warning, message);
+    public void LogError(string message) => AddLog(LogLevel.Error, message);
+
+    private void ClearLogs()
+    {
+        lock (_lockObject)
+        {
+            _logs.Clear();
+        }
+        StateHasChanged();
+    }
+
+    private string GetLogClass(LogLevel level)
+    {
+        return level switch
+        {
+            LogLevel.Error => "text-danger",
+            LogLevel.Warning => "text-warning",
+            LogLevel.Information => "text-info",
+            LogLevel.Debug => "text-muted",
+            _ => ""
+        };
+    }
+
+    private async Task ScrollToBottom()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("scrollToBottom", "debug-logs");
+        }
+        catch
+        {
+            // Ignore JS errors
+        }
+    }
+
+    public void Dispose()
+    {
+        // Cleanup if needed
+    }
+}
+
+<script>
+    window.scrollToBottom = (elementId) => {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.scrollTop = element.scrollHeight;
+        }
+    };
+</script>

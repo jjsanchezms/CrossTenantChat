@@ -8,7 +8,8 @@ namespace CrossTenantChat.Services
     public interface IAzureCommunicationService
     {
         Task<TokenExchangeResult> ExchangeEntraIdTokenForAcsTokenAsync(ChatUser user);
-        Task<ChatThread> CreateChatThreadAsync(string topic, ChatUser creator);
+        Task<(string Token, string UserId)> GetCommunicationUserTokenAsync(string userId);
+        Task<ChatThread> CreateChatThreadAsync(string topic, string[] userIds);
         Task<bool> AddParticipantToChatAsync(string threadId, ChatUser participant);
         Task<bool> SendMessageAsync(string threadId, string message, ChatUser sender);
         Task<List<Models.ChatMessage>> GetMessagesAsync(string threadId);
@@ -52,6 +53,38 @@ namespace CrossTenantChat.Services
             else
             {
                 _logger.LogInformation("No ACS connection string provided, running in demo mode");
+            }
+        }
+
+        public async Task<(string Token, string UserId)> GetCommunicationUserTokenAsync(string userId)
+        {
+            try
+            {
+                _logger.LogInformation("🔄 Getting ACS token for user: {UserId}", userId);
+
+                if (_identityClient != null)
+                {
+                    // Real ACS integration
+                    var identityResponse = await _identityClient.CreateUserAsync();
+                    var tokenResponse = await _identityClient.GetTokenAsync(identityResponse.Value, new[] { CommunicationTokenScope.Chat });
+
+                    _logger.LogInformation("✅ Real ACS token obtained for user: {UserId}", userId);
+                    return (tokenResponse.Value.Token, identityResponse.Value.Id);
+                }
+                else
+                {
+                    // Demo mode - simulate token
+                    var demoToken = $"demo_acs_token_{Guid.NewGuid():N}_{userId}";
+                    var demoUserId = $"8:acs:demo-{userId.Substring(0, Math.Min(8, userId.Length))}";
+
+                    _logger.LogInformation("✅ Demo ACS token generated for user: {UserId}", userId);
+                    return (demoToken, demoUserId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error getting ACS token for user: {UserId}", userId);
+                throw;
             }
         }
 
@@ -110,6 +143,52 @@ namespace CrossTenantChat.Services
                 _logger.LogError(ex, "❌ Error during token exchange for user: {UserEmail}", user.Email);
                 result.ErrorMessage = ex.Message;
                 return result;
+            }
+        }
+
+        public async Task<ChatThread> CreateChatThreadAsync(string topic, string[] userIds)
+        {
+            try
+            {
+                _logger.LogInformation("💬 Creating chat thread: '{Topic}' with {UserCount} users", topic, userIds.Length);
+
+                var threadId = $"thread_{Guid.NewGuid():N}";
+                var chatThread = new ChatThread
+                {
+                    Id = threadId,
+                    Topic = topic,
+                    CreatedBy = userIds.FirstOrDefault() ?? "unknown",
+                    CreatedOn = DateTime.UtcNow,
+                    Participants = new List<ChatUser>(), // Will be populated later when users join
+                    IsCrossTenant = false
+                };
+
+                _chatThreads[threadId] = chatThread;
+                _threadMessages[threadId] = new List<Models.ChatMessage>();
+                
+                // Track user threads for all users
+                foreach (var userId in userIds)
+                {
+                    if (!_userThreads.ContainsKey(userId))
+                    {
+                        _userThreads[userId] = new List<string>();
+                    }
+                    _userThreads[userId].Add(threadId);
+                }
+
+                _logger.LogInformation("✅ Chat thread created: {ThreadId}", threadId);
+                
+                // Send welcome message
+                await SendSystemMessageAsync(threadId, $"💬 Chat thread '{topic}' created");
+
+                await Task.Delay(50); // Small delay for demo effect
+
+                return chatThread;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error creating chat thread: {Topic}", topic);
+                throw;
             }
         }
 

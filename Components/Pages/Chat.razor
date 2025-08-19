@@ -10,7 +10,8 @@
 @inject ILogger<Chat> Logger
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
-@attribute [Authorize]
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [AllowAnonymous]
 @rendermode InteractiveServer
 
 <div class="container-fluid">
@@ -264,13 +265,22 @@
     {
         Logger.LogInformation("🚀 Cross-Tenant Chat Demo initialized");
         
-        if (AuthenticationStateTask != null)
+        try
         {
-            var authState = await AuthenticationStateTask;
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
             if (authState.User.Identity?.IsAuthenticated == true)
             {
+                Logger.LogInformation("✅ User is authenticated, initializing user data");
                 await InitializeAuthenticatedUser(authState.User);
             }
+            else
+            {
+                Logger.LogInformation("⚠️ User is not authenticated");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Error checking authentication state");
         }
         
         isLoading = false;
@@ -284,10 +294,25 @@
             Logger.LogInformation("🔐 Initializing authenticated user");
 
             // Extract user information from claims
-            var nameIdentifier = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? user.FindFirst("oid")?.Value;
-            var name = user.FindFirst(ClaimTypes.Name)?.Value ?? user.FindFirst("name")?.Value;
-            var email = user.FindFirst(ClaimTypes.Email)?.Value ?? user.FindFirst("preferred_username")?.Value;
-            var tenantId = user.FindFirst("tid")?.Value;
+            // Handle both demo and real authentication claim formats
+            var nameIdentifier = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? 
+                               user.FindFirst("oid")?.Value ?? 
+                               user.FindFirst("sub")?.Value;
+                               
+            var name = user.FindFirst(ClaimTypes.Name)?.Value ?? 
+                      user.FindFirst("name")?.Value;
+                      
+            var email = user.FindFirst(ClaimTypes.Email)?.Value ?? 
+                       user.FindFirst("preferred_username")?.Value ??
+                       user.FindFirst("email")?.Value;
+                       
+            var tenantId = user.FindFirst("tid")?.Value ?? 
+                          user.FindFirst("tenant_id")?.Value;
+                          
+            var tenant = user.FindFirst("tenant")?.Value;
+
+            Logger.LogInformation("📋 Claims found - ID: {Id}, Name: {Name}, Email: {Email}, TenantId: {TenantId}, Tenant: {Tenant}", 
+                nameIdentifier, name, email, tenantId, tenant);
 
             if (string.IsNullOrEmpty(nameIdentifier))
             {
@@ -295,10 +320,10 @@
                 return;
             }
 
-            // Determine if this is a cross-tenant user based on tenant ID
+            // Determine if this is a cross-tenant user based on tenant ID or tenant name
             var fabrikamTenantId = "307083d3-52ba-4934-a29a-97cefcedc6a6";
             
-            bool isFromFabrikam = tenantId == fabrikamTenantId;
+            bool isFromFabrikam = tenantId == fabrikamTenantId || tenant == "Fabrikam";
             string tenantName = isFromFabrikam ? "Fabrikam" : "Contoso";
 
             currentUser = new ChatUser
@@ -426,7 +451,7 @@
 
         try
         {
-            var newThread = await AcsService.CreateChatThreadAsync(newThreadTopic, currentUser);
+            var newThread = await AcsService.CreateChatThreadAsync(newThreadTopic, new[] { currentUser.Id });
             await RefreshUserThreads();
             
             selectedThreadId = newThread.Id;

@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Azure.Extensions.AspNetCore.Configuration.Secrets;
 using Azure.Identity;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -64,39 +65,115 @@ else
 }
 
 // Add authentication
-builder.Services.AddAuthentication(options =>
-    {
-        options.DefaultScheme = "Cookies";
-        options.DefaultChallengeScheme = "oidc";
-    })
-    .AddCookie("Cookies")
-    .AddOpenIdConnect("oidc", options =>
-    {
-        options.Authority = builder.Configuration["Azure:AzureAd:Authority"];
-        options.ClientId = builder.Configuration["Azure:AzureAd:ClientId"];
-        options.ClientSecret = builder.Configuration["Azure:AzureAd:ClientSecret"];
-        options.ResponseType = "code";
-        options.SaveTokens = true;
-        options.GetClaimsFromUserInfoEndpoint = true;
-        options.Scope.Clear();
-        options.Scope.Add("openid");
-        options.Scope.Add("profile");
-        options.Scope.Add("email");
-        options.Scope.Add("https://communication.azure.com/.default");
-    })
-    .AddJwtBearer(options =>
-    {
-        options.Authority = builder.Configuration["Azure:AzureAd:Authority"];
-        options.Audience = builder.Configuration["Azure:AzureAd:ClientId"];
-        options.TokenValidationParameters = new TokenValidationParameters
+var azureAdClientId = builder.Configuration["Azure:AzureAd:ClientId"];
+var azureAdClientSecret = builder.Configuration["Azure:AzureAd:ClientSecret"];
+var azureAdTenantId = builder.Configuration["Azure:AzureAd:TenantId"];
+
+// Only configure real authentication if we have valid Azure AD configuration
+if (!string.IsNullOrEmpty(azureAdClientId) && 
+    !azureAdClientId.Contains("your-client-id") && 
+    !azureAdClientId.Contains("contoso-client-id") &&
+    !string.IsNullOrEmpty(azureAdClientSecret) && 
+    !azureAdClientSecret.Contains("your-client-secret") &&
+    !string.IsNullOrEmpty(azureAdTenantId) && 
+    !azureAdTenantId.Contains("your-tenant-id") &&
+    !azureAdTenantId.Contains("contoso-tenant-id") &&
+    !azureAdTenantId.Contains("12345678-1234-1234-1234"))
+{
+    builder.Services.AddAuthentication(options =>
         {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ClockSkew = TimeSpan.FromMinutes(5)
-        };
-    });
+            options.DefaultScheme = "Cookies";
+            options.DefaultChallengeScheme = "oidc-contoso";
+        })
+        .AddCookie("Cookies")
+        .AddOpenIdConnect("oidc-contoso", options =>
+        {
+            var contosoAuthority = $"{builder.Configuration["Azure:AzureAd:Instance"]?.TrimEnd('/')}/{builder.Configuration["Azure:AzureAd:ContosoTenantId"]}";
+            options.Authority = contosoAuthority;
+            options.ClientId = builder.Configuration["Azure:AzureAd:ContosoApp:ClientId"];
+            options.ClientSecret = builder.Configuration["Azure:AzureAd:ContosoApp:ClientSecret"];
+            options.CallbackPath = "/signin-oidc-contoso";
+            options.ResponseType = "code";
+            options.SaveTokens = true;
+            options.GetClaimsFromUserInfoEndpoint = true;
+            options.Scope.Clear();
+            options.Scope.Add("openid");
+            options.Scope.Add("profile");
+            options.Scope.Add("email");
+            options.Scope.Add("https://communication.azure.com/.default");
+            
+            // Add custom claim to identify tenant
+            options.Events = new OpenIdConnectEvents
+            {
+                OnTokenValidated = context =>
+                {
+                    if (context.Principal?.Identity is ClaimsIdentity identity)
+                    {
+                        identity.AddClaim(new System.Security.Claims.Claim("tenant", "Contoso"));
+                        identity.AddClaim(new System.Security.Claims.Claim("tenant_id", builder.Configuration["Azure:AzureAd:ContosoTenantId"] ?? ""));
+                    }
+                    return Task.CompletedTask;
+                }
+            };
+        })
+        .AddOpenIdConnect("oidc-fabrikam", options =>
+        {
+            var fabrikamAuthority = $"{builder.Configuration["Azure:AzureAd:Instance"]?.TrimEnd('/')}/{builder.Configuration["Azure:AzureAd:FabrikamTenantId"]}";
+            options.Authority = fabrikamAuthority;
+            options.ClientId = builder.Configuration["Azure:AzureAd:FabrikamApp:ClientId"];
+            options.ClientSecret = builder.Configuration["Azure:AzureAd:FabrikamApp:ClientSecret"];
+            options.CallbackPath = "/signin-oidc-fabrikam";
+            options.ResponseType = "code";
+            options.SaveTokens = true;
+            options.GetClaimsFromUserInfoEndpoint = true;
+            options.Scope.Clear();
+            options.Scope.Add("openid");
+            options.Scope.Add("profile");
+            options.Scope.Add("email");
+            options.Scope.Add("https://communication.azure.com/.default");
+            
+            // Add custom claim to identify tenant
+            options.Events = new OpenIdConnectEvents
+            {
+                OnTokenValidated = context =>
+                {
+                    if (context.Principal?.Identity is ClaimsIdentity identity)
+                    {
+                        identity.AddClaim(new System.Security.Claims.Claim("tenant", "Fabrikam"));
+                        identity.AddClaim(new System.Security.Claims.Claim("tenant_id", builder.Configuration["Azure:AzureAd:FabrikamTenantId"] ?? ""));
+                    }
+                    return Task.CompletedTask;
+                }
+            };
+        })
+        .AddJwtBearer(options =>
+        {
+            var contosoAuthority = $"{builder.Configuration["Azure:AzureAd:Instance"]?.TrimEnd('/')}/{builder.Configuration["Azure:AzureAd:ContosoTenantId"]}";
+            options.Authority = contosoAuthority;
+            options.Audience = builder.Configuration["Azure:AzureAd:ContosoApp:ClientId"];
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ClockSkew = TimeSpan.FromMinutes(5)
+            };
+        });
+
+    Console.WriteLine("✅ Azure AD Authentication configured");
+}
+else
+{
+    // Demo mode - no real authentication
+    builder.Services.AddAuthentication(options =>
+        {
+            options.DefaultScheme = "Cookies";
+        })
+        .AddCookie("Cookies");
+
+    Console.WriteLine("🧪 Demo mode - Authentication disabled");
+}
 
 builder.Services.AddAuthorization();
 
@@ -157,9 +234,17 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
+    app.UseHttpsRedirection();
 }
-
-app.UseHttpsRedirection();
+else
+{
+    // In development, only use HTTPS redirection if HTTPS is configured
+    var urls = builder.Configuration["ASPNETCORE_URLS"] ?? "";
+    if (urls.Contains("https") || app.Urls.Any(u => u.StartsWith("https")))
+    {
+        app.UseHttpsRedirection();
+    }
+}
 
 // Enable static files serving
 app.UseStaticFiles();

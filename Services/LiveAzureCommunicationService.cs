@@ -42,6 +42,109 @@ public class LiveAzureCommunicationService : IAzureCommunicationService
         _logger.LogInformation("Live Azure Communication Service initialized");
     }
 
+    public async Task<(string Token, string UserId)> GetCommunicationUserTokenAsync(string userId)
+    {
+        try
+        {
+            _logger.LogInformation("🔄 Getting live ACS token for user: {UserId}", userId);
+
+            // Check cache first
+            var cacheKey = $"acs_simple_token_{userId}";
+            if (_memoryCache.TryGetValue(cacheKey, out (string, string)? cachedResult) && cachedResult.HasValue)
+            {
+                _logger.LogInformation("✅ Retrieved cached ACS token for user: {UserId}", userId);
+                return cachedResult.Value;
+            }
+
+            // Create or get cached communication user identity
+            var userCacheKey = $"communication_user_simple_{userId}";
+            string communicationUserId;
+
+            if (_memoryCache.TryGetValue(userCacheKey, out string? cachedUserId) && 
+                !string.IsNullOrEmpty(cachedUserId))
+            {
+                communicationUserId = cachedUserId;
+                _logger.LogInformation("Using cached communication user for: {UserId}", userId);
+            }
+            else
+            {
+                // Create new communication user
+                var communicationUserResponse = await _identityClient.CreateUserAsync();
+                communicationUserId = communicationUserResponse.Value.Id;
+                
+                // Cache the communication user identity
+                _memoryCache.Set(userCacheKey, communicationUserId, TimeSpan.FromHours(24));
+                _logger.LogInformation("Created new communication user: {CommunicationUserId} for user: {UserId}", 
+                    communicationUserId, userId);
+            }
+
+            // Generate access token for the communication user
+            var tokenResponse = await _identityClient.GetTokenAsync(
+                new Azure.Communication.CommunicationUserIdentifier(communicationUserId), 
+                new[] { CommunicationTokenScope.Chat });
+
+            var result = (tokenResponse.Value.Token, communicationUserId);
+
+            // Cache the result for 50 minutes (tokens are valid for 60 minutes)
+            _memoryCache.Set(cacheKey, result, TimeSpan.FromMinutes(50));
+
+            _logger.LogInformation("✅ Successfully generated live ACS access token for user: {UserId}", userId);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error getting live ACS token for user: {UserId}", userId);
+            throw;
+        }
+    }
+
+    public async Task<ChatThread> CreateChatThreadAsync(string topic, string[] userIds)
+    {
+        try
+        {
+            _logger.LogInformation("💬 Creating chat thread: '{Topic}' with {UserCount} users", topic, userIds.Length);
+
+            var threadId = $"thread_{Guid.NewGuid():N}";
+            var chatThread = new ChatThread
+            {
+                Id = threadId,
+                Topic = topic,
+                CreatedBy = userIds.FirstOrDefault() ?? "unknown",
+                CreatedOn = DateTime.UtcNow,
+                Participants = new List<ChatUser>(), // Will be populated when users join
+                IsCrossTenant = false
+            };
+
+            _chatThreads[threadId] = chatThread;
+            _threadMessages[threadId] = new List<Models.ChatMessage>();
+            
+            // Track user threads for all users
+            foreach (var userId in userIds)
+            {
+                if (!_userThreads.ContainsKey(userId))
+                {
+                    _userThreads[userId] = new List<string>();
+                }
+                _userThreads[userId].Add(threadId);
+            }
+
+            _logger.LogInformation("✅ Chat thread created with live ACS backend: {ThreadId}", threadId);
+            
+            // Send welcome message
+            await SendSystemMessageAsync(threadId, $"💬 Chat thread '{topic}' created");
+
+            await Task.Delay(50); // Small delay for demo effect
+
+            return chatThread;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error creating chat thread: {Topic}", topic);
+            throw;
+        }
+    }
+
     public async Task<TokenExchangeResult> ExchangeEntraIdTokenForAcsTokenAsync(ChatUser user)
     {
         _logger.LogInformation("🔄 Exchanging Entra ID token for ACS token for user: {UserId} ({TenantName})", 
