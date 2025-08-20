@@ -324,8 +324,8 @@ public class LiveAzureCommunicationService : IAzureCommunicationService
         }
     }
 
-    // Returns a cached chat thread for the user if available; otherwise creates, caches, and returns a new one.
-    public async Task<ChatThread> GetOrCreateUserThreadAsync(ChatUser user, string defaultTopic = "General")
+    // Returns a cached or existing chat thread for the user if available; does not create new threads.
+    public Task<ChatThread?> GetOrCreateUserThreadAsync(ChatUser user, string? defaultTopic = null)
     {
         var cacheKey = $"chat_thread_user:{user.Id}";
         if (_memoryCache.TryGetValue(cacheKey, out ChatThread? cachedThread) && cachedThread != null)
@@ -348,7 +348,7 @@ public class LiveAzureCommunicationService : IAzureCommunicationService
             }
 
             _logger.LogInformation("🔁 Reusing cached chat thread for user {UserId}: {ThreadId}", user.Id, cachedThread.Id);
-            return cachedThread;
+            return Task.FromResult<ChatThread?>(cachedThread);
         }
 
         // Check in-memory existing threads for this user
@@ -359,16 +359,13 @@ public class LiveAzureCommunicationService : IAzureCommunicationService
             {
                 var existing = _chatThreads[existingId];
                 _memoryCache.Set(cacheKey, existing, TimeSpan.FromHours(2));
-                _logger.LogInformation("📦 Cached existing thread {ThreadId} for user {UserId}", existing.Id, user.Id);
-                return existing;
+        _logger.LogInformation("📦 Cached existing thread {ThreadId} for user {UserId}", existing.Id, user.Id);
+        return Task.FromResult<ChatThread?>(existing);
             }
         }
-
-        // Create new
-        var created = await CreateChatThreadAsync(defaultTopic, user);
-        _memoryCache.Set(cacheKey, created, TimeSpan.FromHours(2));
-        _logger.LogInformation("🆕 Created and cached new thread {ThreadId} for user {UserId}", created.Id, user.Id);
-        return created;
+    // Do not auto-create a thread; require explicit user action
+    _logger.LogInformation("ℹ️ No existing thread found for user {UserId}; user must create a new thread", user.Id);
+    return Task.FromResult<ChatThread?>(null);
     }
 
     public async Task<bool> AddParticipantToChatAsync(string threadId, ChatUser participant)

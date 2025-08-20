@@ -2,6 +2,49 @@
 
 To make the demo instantly collaborative, every newly created thread includes these participants by email:
 
+## Cross-Tenant Chat Demo with Azure Communication Services
+
+This project demonstrates cross-tenant chat using Azure Communication Services (ACS) with Microsoft Entra ID authentication. It showcases how a user from one Azure tenant (Fabrikam) can authenticate and access Azure Communication Services resources hosted in another tenant (Contoso).
+
+## 🚀 Quick Start Options
+
+### Option 1: Demo Mode (No Azure Setup Required)
+
+### Option 2: Live Azure Integration
+
+Deploy with real Azure services for production-ready cross-tenant authentication.
+
+## 🔧 Technology Stack
+
+**Frontend**: ASP.NET Core Blazor Server (.NET 9.0)
+
+## 🎯 Demo Features
+
+### Authentication Flow Visualization
+
+## 🧪 Testing Cross-Tenant Scenarios
+
+### Test Case 1: Fabrikam User Authentication
+
+## 🛠️ Development Notes
+
+### Running in Demo Mode
+
+## 🤝 Contributing
+
+This is a demonstration project. For production use, please implement proper security measures and follow Azure security best practices.
+
+--- 
+
+Note: The app no longer auto-creates a default "General" thread on first login. Users must explicitly create a chat thread.
+
+3. Open the Chat page. If you don't have any threads yet, you'll be prompted to create one.
+4. Create a new thread by providing a topic, then start messaging or add participants.
+
+## Auto-added Participants
+
+To make the demo instantly collaborative, every newly created thread includes these participants by email:
+
  - `contoso@juanjosesshotmail.onmicrosoft.com` (Contoso)
  - `fabrikam@juanjosesanchezsanchezoutlo.onmicrosoft.com` (Fabrikam)
 

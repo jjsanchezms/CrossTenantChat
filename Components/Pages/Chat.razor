@@ -62,7 +62,7 @@
                         <p class="mb-1"><strong>@currentUser?.Name</strong></p>
                         <p class="mb-1 text-muted small">@currentUser?.Email</p>
                         <p class="mb-1"><span class="badge @(currentUser?.IsFromFabrikam == true ? "bg-warning" : "bg-info")">@currentUser?.TenantName</span></p>
-                        <p class="mb-0 text-muted small">ACS ID: @currentUser?.AcsUserId</p>
+                        
                     </div>
                 </div>
 
@@ -265,6 +265,46 @@
         StateHasChanged();
     }
 
+    protected override void OnInitialized()
+    {
+        // React to sign-in/sign-out without requiring a full page reload
+        AuthenticationStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
+    }
+
+    private async void OnAuthenticationStateChanged(Task<AuthenticationState> task)
+    {
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+
+            var state = await task;
+            if (state.User.Identity?.IsAuthenticated == true)
+            {
+                Logger.LogInformation("🔄 Auth state changed: user authenticated -> refreshing user profile");
+                await InitializeAuthenticatedUser(state.User);
+            }
+            else
+            {
+                Logger.LogInformation("🔄 Auth state changed: user signed out");
+                currentUser = null;
+                userThreads.Clear();
+                selectedThreadId = string.Empty;
+                selectedThread = null;
+                currentMessages.Clear();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error handling authentication state change");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
     private async Task InitializeAuthenticatedUser(ClaimsPrincipal user)
     {
         try
@@ -278,11 +318,15 @@
                                user.FindFirst("sub")?.Value;
                                
             var name = user.FindFirst(ClaimTypes.Name)?.Value ?? 
-                      user.FindFirst("name")?.Value;
+                      user.FindFirst("name")?.Value ??
+                      user.Identity?.Name ??
+                      user.FindFirst("preferred_username")?.Value ??
+                      user.FindFirst("upn")?.Value;
                       
             var email = user.FindFirst(ClaimTypes.Email)?.Value ?? 
                        user.FindFirst("preferred_username")?.Value ??
-                       user.FindFirst("email")?.Value;
+                       user.FindFirst("email")?.Value ??
+                       user.FindFirst("upn")?.Value;
                        
             var tenantId = user.FindFirst("tid")?.Value ?? 
                           user.FindFirst("tenant_id")?.Value;
@@ -307,7 +351,7 @@
             currentUser = new ChatUser
             {
                 Id = nameIdentifier,
-                Name = name ?? "Unknown User",
+                Name = string.IsNullOrWhiteSpace(name) ? (email ?? "Unknown User") : name,
                 Email = email ?? "",
                 TenantId = tenantId ?? "",
                 TenantName = tenantName,
@@ -463,5 +507,10 @@
             _ when message.SenderTenant == "Fabrikam" => "bg-warning-subtle",
             _ => "bg-light"
         };
+    }
+
+    public void Dispose()
+    {
+        AuthenticationStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
     }
 }

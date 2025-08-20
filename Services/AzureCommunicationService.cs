@@ -308,7 +308,7 @@ namespace CrossTenantChat.Services
         }
 
     // Returns a cached or existing chat thread for the user if available; does not create new threads.
-    public async Task<ChatThread?> GetOrCreateUserThreadAsync(ChatUser user, string? defaultTopic = null)
+    public Task<ChatThread?> GetOrCreateUserThreadAsync(ChatUser user, string? defaultTopic = null)
         {
             // Try cache first
             var cacheKey = $"chat_thread_user:{user.Id}";
@@ -333,7 +333,7 @@ namespace CrossTenantChat.Services
                 }
 
                 _logger.LogInformation("🔁 Reusing cached chat thread for user {UserId}: {ThreadId}", user.Id, cachedThread.Id);
-                return cachedThread;
+                return Task.FromResult<ChatThread?>(cachedThread);
             }
 
             // If no cache, check existing in-memory threads for this user
@@ -345,13 +345,13 @@ namespace CrossTenantChat.Services
                     var existing = _chatThreads[existingId];
                     _memoryCache.Set(cacheKey, existing, TimeSpan.FromHours(2));
             _logger.LogInformation("📦 Cached existing thread {ThreadId} for user {UserId}", existing.Id, user.Id);
-            return existing;
+            return Task.FromResult<ChatThread?>(existing);
                 }
             }
 
         // Do not auto-create a thread; require explicit user action to create one
         _logger.LogInformation("ℹ️ No existing thread found for user {UserId}; user must create a new thread", user.Id);
-        return null;
+        return Task.FromResult<ChatThread?>(null);
         }
 
         public async Task<bool> AddParticipantToChatAsync(string threadId, ChatUser participant)

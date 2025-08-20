@@ -270,6 +270,7 @@
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: var(--fluent-space-horizontal-xl);
     margin-bottom: var(--fluent-space-vertical-xxxl);
+    align-items: stretch; /* ensure cards in the same row have equal heights */
 }
 
 /* Tenant Cards */
@@ -281,6 +282,9 @@
     transition: all var(--fluent-duration-normal) var(--fluent-curve-easy-ease);
     position: relative;
     overflow: hidden;
+    display: flex;               /* allow pushing actions to bottom */
+    flex-direction: column;
+    height: 100%;                /* stretch to full grid track height */
 }
 
 .fluent-tenant-card:hover {
@@ -376,6 +380,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--fluent-space-vertical-m);
+    margin-top: auto; /* push actions to the bottom so buttons align across cards */
 }
 
 /* Fluent Buttons */
@@ -400,6 +405,23 @@
     white-space: nowrap;
     user-select: none;
     outline: none;
+}
+
+/* Ensure login buttons within tenant cards have consistent alignment */
+.fluent-tenant-actions .fluent-button {
+    width: 100%;
+    justify-content: flex-start; /* Align icon and label to the left for consistent start position */
+    text-align: left;
+    padding-left: var(--fluent-space-horizontal-xxl);
+    padding-right: var(--fluent-space-horizontal-xxl);
+}
+
+/* Normalize icon sizing and vertical alignment inside buttons */
+.fluent-button > svg {
+    width: 16px; /* keep icons consistent even if attribute differs */
+    height: 16px;
+    flex: 0 0 16px;
+    display: block; /* removes baseline whitespace to center properly */
 }
 
 .fluent-button:focus-visible {
