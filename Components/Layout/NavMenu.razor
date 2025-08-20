@@ -1,4 +1,7 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Routing
+@implements IDisposable
+@inject NavigationManager NavManager
 <!-- Simplified Fluent UI Navigation Menu -->
 <div class="fluent-nav-header">
     <div class="fluent-nav-brand">
@@ -10,7 +13,7 @@
         <h1 class="fluent-nav-title">CrossTenantChat</h1>
     </div>
     
-    <button class="fluent-nav-toggle" type="button" aria-label="Toggle navigation menu" title="Navigation menu">
+    <button class="fluent-nav-toggle" type="button" aria-label="Toggle navigation menu" title="Navigation menu" aria-controls="mainMenu" aria-expanded="@_isMenuOpen" @onclick="ToggleMenu">
         <span class="fluent-nav-toggle-icon">
             <span></span>
             <span></span>
@@ -19,7 +22,7 @@
     </button>
 </div>
 
-<nav class="fluent-nav-menu">
+<nav id="mainMenu" class="@MenuCss" role="navigation">
     <div class="fluent-nav-section">        
         <div class="fluent-nav-item">
             <NavLink class="fluent-nav-link" href="" Match="NavLinkMatch.All">
@@ -62,4 +65,35 @@
         </AuthorizeView>
     </div>
 </nav>
+
+@code {
+    private bool _isMenuOpen;
+
+    private string MenuCss => $"fluent-nav-menu{(_isMenuOpen ? " show" : string.Empty)}";
+
+    private void ToggleMenu()
+    {
+        _isMenuOpen = !_isMenuOpen;
+    }
+
+    protected override void OnInitialized()
+    {
+        // Close the menu when navigation occurs (useful on small screens)
+        NavManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        if (_isMenuOpen)
+        {
+            _isMenuOpen = false;
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    public void Dispose()
+    {
+        NavManager.LocationChanged -= OnLocationChanged;
+    }
+}
 
