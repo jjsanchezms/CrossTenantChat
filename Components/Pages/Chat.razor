@@ -11,6 +11,8 @@
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IConfiguration Configuration
+@implements IDisposable
 @attribute [AllowAnonymous]
 @rendermode InteractiveServer
 
@@ -243,6 +245,17 @@
     private string newThreadTopic = "";
     private bool isCreatingThread = false;
 
+    // Auto-refresh settings
+    [Parameter]
+    public bool AutoRefreshEnabled { get; set; } = true;
+
+    [Parameter]
+    public int AutoRefreshIntervalMs { get; set; } = 1500; // 1.5s default for snappy updates
+
+    private CancellationTokenSource? _refreshCts;
+    private Task? _refreshTask;
+    private bool _isRefreshing;
+
     protected override async Task OnInitializedAsync()
     {
         Logger.LogInformation("🚀 Cross-Tenant Chat Demo initialized");
@@ -273,6 +286,23 @@
     {
         // React to sign-in/sign-out without requiring a full page reload
         AuthenticationStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
+
+        // Load optional configuration overrides
+        try
+        {
+            var enabled = Configuration["Chat:AutoRefreshEnabled"];
+            if (!string.IsNullOrWhiteSpace(enabled) && bool.TryParse(enabled, out var b))
+            {
+                AutoRefreshEnabled = b;
+            }
+
+            var interval = Configuration["Chat:AutoRefreshIntervalMs"];
+            if (!string.IsNullOrWhiteSpace(interval) && int.TryParse(interval, out var ms) && ms >= 500 && ms <= 10000)
+            {
+                AutoRefreshIntervalMs = ms;
+            }
+        }
+        catch { }
     }
 
     private void OnAuthenticationStateChanged(Task<AuthenticationState> task)
@@ -298,6 +328,7 @@
                     selectedThreadId = string.Empty;
                     selectedThread = null;
                     currentMessages.Clear();
+                    StopAutoRefresh();
                 }
             }
             catch (Exception ex)
@@ -432,14 +463,25 @@
         selectedThreadId = threadId;
         selectedThread = userThreads.FirstOrDefault(t => t.Id == threadId);
         await RefreshMessages();
+    StartAutoRefresh();
     }
 
     private async Task RefreshMessages()
     {
         if (!string.IsNullOrEmpty(selectedThreadId))
         {
-            currentMessages = await AcsService.GetMessagesAsync(selectedThreadId);
-            StateHasChanged();
+            // Guard against overlapping refreshes
+            if (_isRefreshing) return;
+            _isRefreshing = true;
+            try
+            {
+                currentMessages = await AcsService.GetMessagesAsync(selectedThreadId);
+                StateHasChanged();
+            }
+            finally
+            {
+                _isRefreshing = false;
+            }
         }
     }
 
@@ -500,6 +542,7 @@
             await RefreshMessages();
 
             showNewThreadModal = false;
+            StartAutoRefresh();
         }
         finally
         {
@@ -522,5 +565,62 @@
     public void Dispose()
     {
         AuthenticationStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
+        StopAutoRefresh();
+    }
+
+    private void StartAutoRefresh()
+    {
+        // Cancel any existing loop
+        StopAutoRefresh();
+
+        if (!AutoRefreshEnabled || string.IsNullOrEmpty(selectedThreadId))
+            return;
+
+        _refreshCts = new CancellationTokenSource();
+        var token = _refreshCts.Token;
+
+        _refreshTask = Task.Run(async () =>
+        {
+            try
+            {
+                // Small initial delay to avoid immediate back-to-back fetch after manual refresh
+                await Task.Delay(AutoRefreshIntervalMs, token);
+                while (!token.IsCancellationRequested)
+                {
+                    try
+                    {
+                        if (!string.IsNullOrEmpty(selectedThreadId) && AutoRefreshEnabled)
+                        {
+                            await InvokeAsync(RefreshMessages);
+                        }
+                    }
+                    catch
+                    {
+                        // Swallow per-iteration errors to keep loop alive; they are logged in RefreshMessages
+                    }
+
+                    await Task.Delay(AutoRefreshIntervalMs, token);
+                }
+            }
+            catch (TaskCanceledException)
+            {
+                // expected on cancel
+            }
+        }, token);
+    }
+
+    private void StopAutoRefresh()
+    {
+        try
+        {
+            _refreshCts?.Cancel();
+        }
+        catch { }
+        finally
+        {
+            _refreshCts?.Dispose();
+            _refreshCts = null;
+            _refreshTask = null;
+        }
     }
 }

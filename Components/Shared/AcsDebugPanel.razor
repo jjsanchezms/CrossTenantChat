@@ -59,7 +59,7 @@
                         <div class="text-muted">Token</div>
                         <div>
                             <span class="@(HasToken ? "text-success" : "text-danger")">@(HasToken ? "Available" : "Missing")</span>
-                            @if (User?.TokenExpiry != default)
+                            @if (User is not null && User.TokenExpiry != default)
                             {
                                 <span class="text-muted ms-2">exp @User.TokenExpiry.ToString("HH:mm:ss") UTC</span>
                             }
@@ -70,17 +70,17 @@
                         <hr />
                         <div class="mb-2">
                             <div class="text-muted">Current Thread</div>
-                            <div class="fw-semibold">@Thread.Topic</div>
-                            <div class="text-muted">@Thread.Id</div>
+                            <div class="fw-semibold">@Thread!.Topic</div>
+                            <div class="text-muted">@Thread!.Id</div>
                         </div>
                         <div class="mb-2">
                             <div class="text-muted">Cross-tenant</div>
-                            <div>@(Thread.IsCrossTenant ? "Yes 🌐" : "No")</div>
+                            <div>@(Thread!.IsCrossTenant ? "Yes 🌐" : "No")</div>
                         </div>
                         <div class="mb-1">
                             <div class="text-muted">Participants</div>
                             <div>
-                                @foreach (var p in Thread.Participants)
+                                @foreach (var p in Thread!.Participants)
                                 {
                                     <div class="text-wrap">• @p.Name (@p.TenantName)</div>
                                 }
@@ -144,7 +144,7 @@
                     <div class="text-muted">Token</div>
                     <div>
                         <span class="@(HasToken ? "text-success" : "text-danger")">@(HasToken ? "Available" : "Missing")</span>
-                        @if (User?.TokenExpiry != default)
+                        @if (User is not null && User.TokenExpiry != default)
                         {
                             <span class="text-muted ms-2">exp @User.TokenExpiry.ToString("HH:mm:ss") UTC</span>
                         }
@@ -155,17 +155,17 @@
                     <hr />
                     <div class="mb-2">
                         <div class="text-muted">Current Thread</div>
-                        <div class="fw-semibold">@Thread.Topic</div>
-                        <div class="text-muted">@Thread.Id</div>
+                        <div class="fw-semibold">@Thread!.Topic</div>
+                        <div class="text-muted">@Thread!.Id</div>
                     </div>
                     <div class="mb-2">
                         <div class="text-muted">Cross-tenant</div>
-                        <div>@(Thread.IsCrossTenant ? "Yes 🌐" : "No")</div>
+                        <div>@(Thread!.IsCrossTenant ? "Yes 🌐" : "No")</div>
                     </div>
                     <div class="mb-1">
                         <div class="text-muted">Participants</div>
                         <div>
-                            @foreach (var p in Thread.Participants)
+                            @foreach (var p in Thread!.Participants)
                             {
                                 <div class="text-wrap">• @p.Name (@p.TenantName)</div>
                             }
@@ -226,32 +226,32 @@ else
             <div class="text-muted">ACS User Id</div>
             <div class="text-break">@DisplayAcsUserId</div>
         </div>
-        <div class="mb-2">
+    <div class="mb-2">
             <div class="text-muted">Token</div>
             <div>
                 <span class="@(HasToken ? "text-success" : "text-danger")">@(HasToken ? "Available" : "Missing")</span>
-                @if (User?.TokenExpiry != default)
+        @if (User is not null && User.TokenExpiry != default)
                 {
-                    <span class="text-muted ms-2">exp @User.TokenExpiry.ToString("HH:mm:ss") UTC</span>
+            <span class="text-muted ms-2">exp @User.TokenExpiry.ToString("HH:mm:ss") UTC</span>
                 }
             </div>
         </div>
-        @if (Thread != null)
+    @if (Thread != null)
         {
             <hr />
             <div class="mb-2">
                 <div class="text-muted">Current Thread</div>
-                <div class="fw-semibold">@Thread.Topic</div>
-                <div class="text-muted">@Thread.Id</div>
+        <div class="fw-semibold">@Thread!.Topic</div>
+        <div class="text-muted">@Thread!.Id</div>
             </div>
             <div class="mb-2">
                 <div class="text-muted">Cross-tenant</div>
-                <div>@(Thread.IsCrossTenant ? "Yes 🌐" : "No")</div>
+        <div>@(Thread!.IsCrossTenant ? "Yes 🌐" : "No")</div>
             </div>
             <div class="mb-1">
                 <div class="text-muted">Participants</div>
                 <div>
-                    @foreach (var p in Thread.Participants)
+            @foreach (var p in Thread!.Participants)
                     {
                         <div class="text-wrap">• @p.Name (@p.TenantName)</div>
                     }
@@ -274,16 +274,16 @@ else
     private bool _collapsed;
 
     private string EnvironmentName => System.Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Unknown";
-    private string ServiceTypeName => AcsService.GetType().Name;
+    private string ServiceTypeName => AcsService?.GetType().Name ?? "(unknown)";
     private bool IsLive => ServiceTypeName.Contains("Live", StringComparison.OrdinalIgnoreCase);
-    private string AcsEndpoint => Configuration["Azure:AzureCommunicationServices:EndpointUrl"] ?? ParseEndpointFromConnectionString() ?? "(not configured)";
-    private string AcsResourceId => Configuration["Azure:AzureCommunicationServices:ResourceId"] ?? "(not configured)";
+    private string AcsEndpoint => Configuration?["Azure:AzureCommunicationServices:EndpointUrl"] ?? ParseEndpointFromConnectionString() ?? "(not configured)";
+    private string AcsResourceId => Configuration?["Azure:AzureCommunicationServices:ResourceId"] ?? "(not configured)";
     private bool HasToken => !string.IsNullOrWhiteSpace(User?.AcsAccessToken);
     private string DisplayAcsUserId => string.IsNullOrWhiteSpace(User?.AcsUserId) ? "(none)" : (User?.AcsUserId ?? "(none)");
 
     private string? ParseEndpointFromConnectionString()
     {
-        var cs = Configuration["Azure:AzureCommunicationServices:ConnectionString"];
+    var cs = Configuration?["Azure:AzureCommunicationServices:ConnectionString"];
         if (string.IsNullOrWhiteSpace(cs)) return null;
         // Basic parse: endpoint=...;accesskey=...
         var parts = cs.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
