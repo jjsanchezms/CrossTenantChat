@@ -118,6 +118,6 @@ C:\acsworkspace\AzureCommunication\CrossTenantChat\obj\Debug\net9.0\refint\Cross
 C:\acsworkspace\AzureCommunication\CrossTenantChat\obj\Debug\net9.0\CrossTenantChat.pdb
 C:\acsworkspace\AzureCommunication\CrossTenantChat\obj\Debug\net9.0\CrossTenantChat.genruntimeconfig.cache
 C:\acsworkspace\AzureCommunication\CrossTenantChat\obj\Debug\net9.0\ref\CrossTenantChat.dll
-C:\acsworkspace\AzureCommunication\CrossTenantChat\obj\Debug\net9.0\compressed\eme0az64a5-uvitl6p1o7.gz
 C:\acsworkspace\AzureCommunication\CrossTenantChat\obj\Debug\net9.0\compressed\j3nimxciax-ga56ne3rn0.gz
 C:\acsworkspace\AzureCommunication\CrossTenantChat\obj\Debug\net9.0\compressed\py2aezni08-ga56ne3rn0.gz
+C:\acsworkspace\AzureCommunication\CrossTenantChat\obj\Debug\net9.0\compressed\eme0az64a5-j87nnmxnpv.gz
