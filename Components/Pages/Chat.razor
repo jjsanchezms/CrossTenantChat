@@ -95,6 +95,7 @@
                         <button class="btn btn-success btn-sm w-100 mt-2" @onclick="ShowNewThreadModal">
                             ➕ New Thread
                         </button>
+
                     </div>
                 </div>
             </div>
@@ -173,6 +174,9 @@
                         </div>
                     </div>
                 }
+
+                <!-- ACS Debug Panel placed below the chat area (right column bottom) as footer-style -->
+                <AcsDebugPanel User="currentUser" Thread="selectedThread" InitiallyCollapsed="true" Inline="true" FooterStyle="true" />
             </div>
         </div>
     }
@@ -271,38 +275,41 @@
         AuthenticationStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
     }
 
-    private async void OnAuthenticationStateChanged(Task<AuthenticationState> task)
+    private void OnAuthenticationStateChanged(Task<AuthenticationState> task)
     {
-        try
+        _ = InvokeAsync(async () =>
         {
-            isLoading = true;
-            StateHasChanged();
+            try
+            {
+                isLoading = true;
+                StateHasChanged();
 
-            var state = await task;
-            if (state.User.Identity?.IsAuthenticated == true)
-            {
-                Logger.LogInformation("🔄 Auth state changed: user authenticated -> refreshing user profile");
-                await InitializeAuthenticatedUser(state.User);
+                var state = await task;
+                if (state.User.Identity?.IsAuthenticated == true)
+                {
+                    Logger.LogInformation("🔄 Auth state changed: user authenticated -> refreshing user profile");
+                    await InitializeAuthenticatedUser(state.User);
+                }
+                else
+                {
+                    Logger.LogInformation("🔄 Auth state changed: user signed out");
+                    currentUser = null;
+                    userThreads.Clear();
+                    selectedThreadId = string.Empty;
+                    selectedThread = null;
+                    currentMessages.Clear();
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Logger.LogInformation("🔄 Auth state changed: user signed out");
-                currentUser = null;
-                userThreads.Clear();
-                selectedThreadId = string.Empty;
-                selectedThread = null;
-                currentMessages.Clear();
+                Logger.LogError(ex, "Error handling authentication state change");
             }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error handling authentication state change");
-        }
-        finally
-        {
-            isLoading = false;
-            StateHasChanged();
-        }
+            finally
+            {
+                isLoading = false;
+                StateHasChanged();
+            }
+        });
     }
 
     private async Task InitializeAuthenticatedUser(ClaimsPrincipal user)
@@ -401,6 +408,9 @@
             }
 
             Logger.LogInformation("✅ ACS token exchange successful");
+
+            // Store expiry for debug panel
+            currentUser.TokenExpiry = tokenResult.ExpiresOn;
         }
         catch (Exception ex)
         {

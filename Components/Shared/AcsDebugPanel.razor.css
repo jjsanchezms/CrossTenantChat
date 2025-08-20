@@ -1,0 +1,21 @@
+/* Footer-style debug panel look */
+.acs-debug-footer {
+  margin-top: 16px;
+  padding: 10px 12px;
+  border-top: 1px solid rgba(0,0,0,0.1);
+  background: linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0.03));
+  border-radius: 0 0 6px 6px;
+}
+
+.acs-debug-footer .btn.btn-link {
+  color: #6c757d;
+}
+
+.acs-debug-footer .btn.btn-link:hover {
+  text-decoration: none;
+  color: #495057;
+}
+
+.acs-debug-footer hr {
+  margin: 8px 0;
+}
