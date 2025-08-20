@@ -36,6 +36,12 @@
                     <div class="fluent-messagebar-content">@statusMessage</div>
                 </div>
             }
+
+            <!-- Blazor Connection Test -->
+            <div class="fluent-messagebar fluent-messagebar-info" style="margin-bottom: 1rem;">
+                <button class="fluent-button fluent-button-small" @onclick="TestBlazorConnection">Test Blazor</button>
+                <span style="margin-left: 0.5rem;">Counter: @testCounter</span>
+            </div>
             
             <!-- Tenant Selection -->
             <div class="fluent-login-body">
@@ -61,7 +67,8 @@
                         <div class="fluent-tenant-actions">
                             <button class="fluent-button fluent-button-primary" 
                                     disabled="@isProcessing"
-                                    @onclick="@(() => LoginWithTenant("Fabrikam"))">
+                                    @onclick="@(() => LoginWithTenant("Fabrikam"))"
+                                    @onclick:preventDefault="true">
                                 @if (isProcessing && selectedTenant == "Fabrikam")
                                 {
                                     <div class="fluent-spinner">
@@ -108,7 +115,8 @@
                         <div class="fluent-tenant-actions">
                             <button class="fluent-button fluent-button-primary" 
                                     disabled="@isProcessing"
-                                    @onclick="@(() => LoginWithTenant("Contoso"))">
+                                    @onclick="@(() => LoginWithTenant("Contoso"))"
+                                    @onclick:preventDefault="true">
                                 @if (isProcessing && selectedTenant == "Contoso")
                                 {
                                     <div class="fluent-spinner">
@@ -203,6 +211,7 @@
     private bool isProcessing = false;
     private string? selectedTenant = null;
     private string statusMessage = "";
+    private int testCounter = 0;
     
     private List<DebugMessage> debugMessages = new();
     
@@ -215,6 +224,14 @@
     private string GetReturnUrl()
     {
         return !string.IsNullOrEmpty(ReturnUrl) ? ReturnUrl : "/chat";
+    }
+
+    private void TestBlazorConnection()
+    {
+        testCounter++;
+        AddDebugMessage($"🧪 Blazor connection test #{testCounter}");
+        statusMessage = $"Blazor is working! Test #{testCounter}";
+        StateHasChanged();
     }
 
     private void AddDebugMessage(string message)
