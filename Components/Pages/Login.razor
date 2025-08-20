@@ -196,11 +196,16 @@
     {
         Logger.LogInformation("🎨 Login page initialized with ReturnUrl: {ReturnUrl}", ReturnUrl ?? "null");
         AddDebugMessage($"🎨 Login page initialized");
-        AddDebugMessage($"� Return URL parameter: {ReturnUrl ?? "not provided"}");
-        AddDebugMessage($"� Current URL: {Navigation.Uri}");
-    // Precompute challenge URLs for reliable navigation via anchor tags
-    var r = GetReturnUrl();
-    _fabrikamChallengeUrl = $"/challenge/oidc?tenant=Fabrikam&returnUrl={Uri.EscapeDataString(r)}";
-    _contosoChallengeUrl = $"/challenge/oidc?tenant=Contoso&returnUrl={Uri.EscapeDataString(r)}";
+        AddDebugMessage($"• Return URL parameter: {ReturnUrl ?? "not provided"}");
+        AddDebugMessage($"• Current URL: {Navigation.Uri}");
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Ensure we recompute challenge URLs whenever query parameters (like returnUrl) are supplied/changed
+        var r = GetReturnUrl();
+        _fabrikamChallengeUrl = $"/challenge/oidc?tenant=Fabrikam&returnUrl={Uri.EscapeDataString(r)}";
+        _contosoChallengeUrl = $"/challenge/oidc?tenant=Contoso&returnUrl={Uri.EscapeDataString(r)}";
+        Logger.LogInformation("🔗 Challenge URLs prepared with returnUrl: {ReturnUrl}", r);
     }
 }
