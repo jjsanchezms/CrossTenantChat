@@ -1,3 +1,4 @@
+
 @page "/chat"
 @using CrossTenantChat.Models
 @using CrossTenantChat.Services
@@ -12,6 +13,7 @@
 @inject IJSRuntime JSRuntime
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IConfiguration Configuration
+@using System.Text.RegularExpressions
 @implements IDisposable
 @attribute [AllowAnonymous]
 @rendermode InteractiveServer
@@ -137,7 +139,13 @@
                                                 }
                                                 <span class="ms-2">@message.Timestamp.ToString("HH:mm:ss")</span>
                                             </div>
-                                            <div>@message.Content</div>
+                                            <div>
+                                                @if (message.Type == MessageType.Text && message.SenderTenant == "Fabrikam")
+                                                {
+                                                    <span title="Cross-tenant message">🌐 </span>
+                                                }
+                                                @SanitizeMessageContent(message)
+                                            </div>
                                         </div>
                                     }
                                 }
@@ -622,5 +630,14 @@
             _refreshCts = null;
             _refreshTask = null;
         }
+    }
+
+    // Remove any legacy-leading globe icons that may have been persisted into message content
+    // by earlier versions of the app. Keeps display idempotent while the UI adds a single icon.
+    private string SanitizeMessageContent(Models.ChatMessage message)
+    {
+        var content = message.Content ?? string.Empty;
+        // Strip any number of "🌐" with optional surrounding spaces at the start
+        return Regex.Replace(content, @"^(?:\s*🌐\s*)+", string.Empty);
     }
 }

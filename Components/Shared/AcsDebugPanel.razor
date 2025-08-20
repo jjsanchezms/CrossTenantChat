@@ -59,9 +59,9 @@
                         <div class="text-muted">Token</div>
                         <div>
                             <span class="@(HasToken ? "text-success" : "text-danger")">@(HasToken ? "Available" : "Missing")</span>
-                            @if (User is not null && User.TokenExpiry != default)
+                            @if (TokenExpiryDisplay is string exp1)
                             {
-                                <span class="text-muted ms-2">exp @User.TokenExpiry.ToString("HH:mm:ss") UTC</span>
+                                <span class="text-muted ms-2">exp @exp1 UTC</span>
                             }
                         </div>
                     </div>
@@ -144,9 +144,9 @@
                     <div class="text-muted">Token</div>
                     <div>
                         <span class="@(HasToken ? "text-success" : "text-danger")">@(HasToken ? "Available" : "Missing")</span>
-                        @if (User is not null && User.TokenExpiry != default)
+                        @if (TokenExpiryDisplay is string exp2)
                         {
-                            <span class="text-muted ms-2">exp @User.TokenExpiry.ToString("HH:mm:ss") UTC</span>
+                            <span class="text-muted ms-2">exp @exp2 UTC</span>
                         }
                     </div>
                 </div>
@@ -230,10 +230,10 @@ else
             <div class="text-muted">Token</div>
             <div>
                 <span class="@(HasToken ? "text-success" : "text-danger")">@(HasToken ? "Available" : "Missing")</span>
-        @if (User is not null && User.TokenExpiry != default)
-                {
-            <span class="text-muted ms-2">exp @User.TokenExpiry.ToString("HH:mm:ss") UTC</span>
-                }
+        @if (TokenExpiryDisplay is string exp3)
+        {
+            <span class="text-muted ms-2">exp @exp3 UTC</span>
+        }
             </div>
         </div>
     @if (Thread != null)
@@ -280,6 +280,7 @@ else
     private string AcsResourceId => Configuration?["Azure:AzureCommunicationServices:ResourceId"] ?? "(not configured)";
     private bool HasToken => !string.IsNullOrWhiteSpace(User?.AcsAccessToken);
     private string DisplayAcsUserId => string.IsNullOrWhiteSpace(User?.AcsUserId) ? "(none)" : (User?.AcsUserId ?? "(none)");
+    private string? TokenExpiryDisplay => (User?.TokenExpiry ?? default) != default ? User!.TokenExpiry.ToString("HH:mm:ss") : null;
 
     private string? ParseEndpointFromConnectionString()
     {

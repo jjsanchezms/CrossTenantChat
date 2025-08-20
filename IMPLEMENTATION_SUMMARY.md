@@ -148,3 +148,7 @@ Navigate to: `http://localhost:5068/chat`
 ✅ **Setup scripts** for easy deployment  
 
 The project successfully demonstrates the complete cross-tenant chat scenario using Azure Communication Services with Microsoft Entra ID authentication, providing both educational value and a foundation for production implementation.
+
+## 🐛 Recent Bug Fixes
+
+- Fixed duplicated globe icons on refresh: previously, the service mutated message content by prefixing "🌐" during each retrieval, causing multiple icons to accumulate after page refresh or auto-refresh. The fix makes message retrieval idempotent (no content mutation) and renders the icon conditionally in the UI for Fabrikam senders.

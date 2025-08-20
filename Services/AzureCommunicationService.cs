@@ -415,7 +415,8 @@ namespace CrossTenantChat.Services
                     ThreadId = threadId,
                     Content = message,
                     SenderId = sender.AcsUserId,
-                    SenderName = sender.Name,
+                    // Show email as sender label when available for clearer identification
+                    SenderName = string.IsNullOrWhiteSpace(sender.Email) ? sender.Name : sender.Email,
                     SenderTenant = sender.TenantName,
                     Timestamp = DateTime.UtcNow,
                     Type = MessageType.Text
@@ -451,16 +452,11 @@ namespace CrossTenantChat.Services
                     return new List<Models.ChatMessage>();
                 }
 
-                var messages = _threadMessages[threadId].OrderBy(m => m.Timestamp).ToList();
-                
-                // Add cross-tenant indicators to messages
-                foreach (var message in messages)
-                {
-                    if (message.Type == MessageType.Text && message.SenderTenant == "Fabrikam")
-                    {
-                        message.Content = $"🌐 {message.Content}";
-                    }
-                }
+                var messages = _threadMessages[threadId]
+                    .OrderBy(m => m.Timestamp)
+                    .ToList();
+                // Note: Do NOT mutate message content here. Rendering layer will
+                // conditionally display cross-tenant indicators to keep retrieval idempotent.
 
                 await Task.Delay(10); // Small delay for demo effect
                 return messages;
