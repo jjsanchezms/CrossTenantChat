@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "YpyNJn8Zup8=",
+  "dgSpecHash": "gS7AafngH2g=",
   "success": true,
   "projectFilePath": "C:\\acsworkspace\\AzureCommunication\\CrossTenantChat\\CrossTenantChat.csproj",
   "expectedPackageFiles": [
@@ -48,18 +48,5 @@
     "C:\\Users\\juanj_vtio5zq\\.nuget\\packages\\system.text.json\\4.7.2\\system.text.json.4.7.2.nupkg.sha512",
     "C:\\Users\\juanj_vtio5zq\\.nuget\\packages\\system.threading.tasks.extensions\\4.5.4\\system.threading.tasks.extensions.4.5.4.nupkg.sha512"
   ],
-  "logs": [
-    {
-      "code": "NU1603",
-      "level": "Warning",
-      "message": "CrossTenantChat depends on Azure.Communication.Common (>= 1.3.2) but Azure.Communication.Common 1.3.2 was not found. Azure.Communication.Common 1.4.0 was resolved instead.",
-      "projectPath": "C:\\acsworkspace\\AzureCommunication\\CrossTenantChat\\CrossTenantChat.csproj",
-      "warningLevel": 1,
-      "filePath": "C:\\acsworkspace\\AzureCommunication\\CrossTenantChat\\CrossTenantChat.csproj",
-      "libraryId": "Azure.Communication.Common",
-      "targetGraphs": [
-        "net9.0"
-      ]
-    }
-  ]
+  "logs": []
 }

@@ -100,33 +100,45 @@ namespace CrossTenantChat.Controllers
         }
 
         [HttpGet("/logout")]
-        public async Task<IActionResult> Logout()
+        public async Task<IActionResult> Logout([FromQuery] string? returnUrl = "/")
         {
             _logger.LogInformation("User logout initiated");
-            
-            // Check if we're in demo mode
+
             var services = HttpContext.RequestServices;
             var authSchemeProvider = services.GetRequiredService<IAuthenticationSchemeProvider>();
             var contosoScheme = await authSchemeProvider.GetSchemeAsync("oidc-contoso");
             var fabrikamScheme = await authSchemeProvider.GetSchemeAsync("oidc-fabrikam");
 
-            await HttpContext.SignOutAsync("Cookies");
-            
+            // If real OIDC auth is configured, sign out from both Cookie and the correct OIDC scheme
             if (contosoScheme != null || fabrikamScheme != null)
             {
-                // Real authentication mode - determine which scheme to sign out from based on current user
                 var tenantClaim = User.FindFirst("tenant")?.Value;
+                string? scheme = null;
                 if (tenantClaim == "Fabrikam" && fabrikamScheme != null)
                 {
-                    await HttpContext.SignOutAsync("oidc-fabrikam");
+                    scheme = "oidc-fabrikam";
+                    _logger.LogInformation("Signing out using Fabrikam OIDC scheme");
                 }
                 else if (contosoScheme != null)
                 {
-                    await HttpContext.SignOutAsync("oidc-contoso");
+                    scheme = "oidc-contoso";
+                    _logger.LogInformation("Signing out using Contoso OIDC scheme");
+                }
+
+                var safeReturnUrl = Url.IsLocalUrl(returnUrl) ? returnUrl! : "/";
+                var props = new AuthenticationProperties { RedirectUri = safeReturnUrl };
+
+                if (scheme != null)
+                {
+                    // Returning SignOut issues the end-session request to the IdP and clears the cookie
+                    return SignOut(props, "Cookies", scheme);
                 }
             }
-            
-            return Redirect("/");
+
+            // Demo mode or no OIDC scheme available: clear cookie and redirect locally
+            await HttpContext.SignOutAsync("Cookies");
+            var localUrl = Url.IsLocalUrl(returnUrl) ? returnUrl! : "/";
+            return LocalRedirect(localUrl);
         }
 
         [HttpGet("/profile")]

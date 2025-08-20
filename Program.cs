@@ -8,13 +8,18 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Azure.Extensions.AspNetCore.Configuration.Secrets;
 using Azure.Identity;
+using Azure.Core;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Hosting.StaticWebAssets;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure static web assets for development
+// Configure static web assets for all environments (when running from source)
+// This enables component library and wwwroot assets even when not using a publish output
+StaticWebAssetsLoader.UseStaticWebAssets(builder.Environment, builder.Configuration);
 if (builder.Environment.IsDevelopment())
 {
+    // Also enable legacy dev-time static web assets hook
     builder.WebHost.UseStaticWebAssets();
 }
 
@@ -26,14 +31,31 @@ builder.Configuration.AddJsonFile($"appsettings.{environment}.json", optional: t
 if (environment == "Live")
 {
     var keyVaultUri = builder.Configuration["Azure:KeyVault:VaultUri"];
-    if (!string.IsNullOrEmpty(keyVaultUri))
+    var keyVaultEnabled = builder.Configuration.GetValue<bool?>("Azure:KeyVault:Enabled") ?? true;
+    var preferAzureCli = builder.Configuration.GetValue<bool>("Azure:KeyVault:PreferAzureCliCredential");
+    var enableInteractiveBrowser = builder.Configuration.GetValue<bool>("Azure:KeyVault:EnableInteractiveBrowserCredential");
+
+    if (keyVaultEnabled && !string.IsNullOrEmpty(keyVaultUri))
     {
         try
         {
-            builder.Configuration.AddAzureKeyVault(
-                new Uri(keyVaultUri),
-                new DefaultAzureCredential());
-            
+            // Build a credential chain that works well locally
+            // Build credential chain honoring configuration
+            var defaultOptions = new DefaultAzureCredentialOptions { ExcludeAzurePowerShellCredential = true };
+            var tenantId = builder.Configuration["Azure:AzureAd:TenantId"];
+            var creds = new List<TokenCredential>();
+            if (preferAzureCli) creds.Add(new AzureCliCredential());
+            if (enableInteractiveBrowser)
+            {
+                creds.Add(new InteractiveBrowserCredential(new InteractiveBrowserCredentialOptions
+                {
+                    TenantId = string.IsNullOrWhiteSpace(tenantId) ? null : tenantId
+                }));
+            }
+            creds.Add(new DefaultAzureCredential(defaultOptions));
+            TokenCredential credential = creds.Count == 1 ? creds[0] : new ChainedTokenCredential(creds.ToArray());
+
+            builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUri), credential);
             Console.WriteLine($"✅ Connected to Azure Key Vault: {keyVaultUri}");
         }
         catch (Exception ex)
@@ -240,7 +262,22 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
-    app.UseHttpsRedirection();
+
+    // Only enable HTTPS redirection when an HTTPS endpoint is configured
+    var urls = app.Configuration["ASPNETCORE_URLS"];
+    var httpsConfigured = (!string.IsNullOrEmpty(urls) && urls.Contains("https", StringComparison.OrdinalIgnoreCase))
+        || !string.IsNullOrEmpty(app.Configuration["ASPNETCORE_HTTPS_PORT"])
+        || !string.IsNullOrEmpty(app.Configuration["Kestrel:Endpoints:Https:Url"]) 
+        || app.Configuration.GetSection("Kestrel:Endpoints:Https").Exists();
+
+    if (httpsConfigured)
+    {
+        app.UseHttpsRedirection();
+    }
+    else
+    {
+        logger.LogWarning("HTTPS redirection disabled: no HTTPS endpoint configured. Set 'ASPNETCORE_URLS' to include https or configure Kestrel endpoints to enable.");
+    }
 }
 
 // Enable static files serving

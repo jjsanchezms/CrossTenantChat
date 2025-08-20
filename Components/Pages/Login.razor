@@ -37,11 +37,7 @@
                 </div>
             }
 
-            <!-- Blazor Connection Test -->
-            <div class="fluent-messagebar fluent-messagebar-info" style="margin-bottom: 1rem;">
-                <button class="fluent-button fluent-button-small" @onclick="TestBlazorConnection">Test Blazor</button>
-                <span style="margin-left: 0.5rem;">Counter: @testCounter</span>
-            </div>
+            
             
             <!-- Tenant Selection -->
             <div class="fluent-login-body">
@@ -65,35 +61,13 @@
                         </div>
                         
                         <div class="fluent-tenant-actions">
-                            <button class="fluent-button fluent-button-primary" 
-                                    disabled="@isProcessing"
-                                    @onclick="@(() => LoginWithTenant("Fabrikam"))"
-                                    @onclick:preventDefault="true">
-                                @if (isProcessing && selectedTenant == "Fabrikam")
-                                {
-                                    <div class="fluent-spinner">
-                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                                            <path d="M8 0a8 8 0 0 1 8 8 .5.5 0 0 1-1 0 7 7 0 1 0-7 7 .5.5 0 0 1 0 1A8 8 0 0 1 8 0z"/>
-                                        </svg>
-                                    </div>
-                                    <span>Connecting...</span>
-                                }
-                                else
-                                {
-                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                                        <path fill-rule="evenodd" d="M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0v-2z"/>
-                                        <path fill-rule="evenodd" d="M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
-                                    </svg>
-                                    <span>Sign in with Fabrikam</span>
-                                }
-                            </button>
-                            
-                            <button class="fluent-button fluent-button-subtle" @onclick="@(() => TestClick("Fabrikam"))">>
+                            <a class="fluent-button fluent-button-primary" href="@_fabrikamChallengeUrl">
                                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                                    <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5v-2z"/>
+                                    <path fill-rule="evenodd" d="M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0v-2z"/>
+                                    <path fill-rule="evenodd" d="M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
                                 </svg>
-                                Test Connection
-                            </button>
+                                <span>Sign in with Fabrikam</span>
+                            </a>
                         </div>
                     </div>
                     
@@ -113,35 +87,13 @@
                         </div>
                         
                         <div class="fluent-tenant-actions">
-                            <button class="fluent-button fluent-button-primary" 
-                                    disabled="@isProcessing"
-                                    @onclick="@(() => LoginWithTenant("Contoso"))"
-                                    @onclick:preventDefault="true">
-                                @if (isProcessing && selectedTenant == "Contoso")
-                                {
-                                    <div class="fluent-spinner">
-                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                                            <path d="M8 0a8 8 0 0 1 8 8 .5.5 0 0 1-1 0 7 7 0 1 0-7 7 .5.5 0 0 1 0 1A8 8 0 0 1 8 0z"/>
-                                        </svg>
-                                    </div>
-                                    <span>Connecting...</span>
-                                }
-                                else
-                                {
-                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                                        <path fill-rule="evenodd" d="M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0v-2z"/>
-                                        <path fill-rule="evenodd" d="M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
-                                    </svg>
-                                    <span>Sign in with Contoso</span>
-                                }
-                            </button>
-                            
-                            <button class="fluent-button fluent-button-subtle" @onclick="@(() => TestClick("Contoso"))">>
+                            <a class="fluent-button fluent-button-primary" href="@_contosoChallengeUrl">
                                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                                    <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5v-2z"/>
+                                    <path fill-rule="evenodd" d="M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0v-2z"/>
+                                    <path fill-rule="evenodd" d="M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
                                 </svg>
-                                Test Connection
-                            </button>
+                                <span>Sign in with Contoso</span>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -161,9 +113,7 @@
                         <p>
                             <strong>Contoso:</strong> The home tenant that owns the Azure Communication Services resources and hosts the chat infrastructure.
                         </p>
-                        <small class="fluent-info-note">
-                            💡 Try the main sign-in buttons first. Use test buttons if you encounter authentication issues.
-                        </small>
+                        
                     </div>
                 </div>
             </div>
@@ -208,10 +158,10 @@
     [SupplyParameterFromQuery(Name = "returnUrl")]
     public string? ReturnUrl { get; set; }
 
-    private bool isProcessing = false;
-    private string? selectedTenant = null;
+    // Removed unused state fields after simplifying sign-in to anchors
     private string statusMessage = "";
-    private int testCounter = 0;
+    private string _fabrikamChallengeUrl = "/challenge/oidc?tenant=Fabrikam&returnUrl=/chat";
+    private string _contosoChallengeUrl = "/challenge/oidc?tenant=Contoso&returnUrl=/chat";
     
     private List<DebugMessage> debugMessages = new();
     
@@ -226,13 +176,7 @@
         return !string.IsNullOrEmpty(ReturnUrl) ? ReturnUrl : "/chat";
     }
 
-    private void TestBlazorConnection()
-    {
-        testCounter++;
-        AddDebugMessage($"🧪 Blazor connection test #{testCounter}");
-        statusMessage = $"Blazor is working! Test #{testCounter}";
-        StateHasChanged();
-    }
+    
 
     private void AddDebugMessage(string message)
     {
@@ -246,83 +190,17 @@
         StateHasChanged();
     }
 
-    private void TestClick(string tenant)
-    {
-        AddDebugMessage($"🧪 Test button clicked for {tenant}");
-        Logger.LogInformation("🧪 Test button clicked for tenant: {Tenant}", tenant);
-        statusMessage = $"Test connection successful for {tenant}!";
-        StateHasChanged();
-    }
-
-    private async Task LoginWithTenant(string tenant)
-    {
-        if (isProcessing) 
-        {
-            AddDebugMessage("⚠️ Already processing, ignoring click");
-            return;
-        }
-        
-        isProcessing = true;
-        selectedTenant = tenant;
-        statusMessage = $"Initiating authentication with {tenant}...";
-        StateHasChanged();
-        
-        AddDebugMessage($"🚀 Login button clicked for tenant: {tenant}");
-        Logger.LogInformation("🚀 Initiating login for tenant: {Tenant}", tenant);
-        
-        try
-        {
-            AddDebugMessage("📋 Creating authentication properties...");
-            
-            // Set the tenant-specific authority based on selection
-            if (tenant == "Fabrikam")
-            {
-                AddDebugMessage("🏢 Configuring Fabrikam tenant authentication");
-            }
-            else
-            {
-                AddDebugMessage("🏛️ Configuring Contoso tenant authentication");
-            }
-            
-            string returnUrl = GetReturnUrl();
-            AddDebugMessage($"📍 Return URL: {returnUrl}");
-            
-            var challengeUrl = $"/challenge/oidc?tenant={tenant}&returnUrl={Uri.EscapeDataString(returnUrl)}";
-            AddDebugMessage($"🌐 Challenge URL: {challengeUrl}");
-            
-            statusMessage = $"Redirecting to {tenant} authentication...";
-            StateHasChanged();
-            
-            // Add a small delay to show the loading state
-            await Task.Delay(100);
-            
-            AddDebugMessage("✅ Initiating navigation with forceLoad=true");
-            
-            // Log the navigation attempt
-            Logger.LogInformation("🌐 Navigating to challenge URL: {ChallengeUrl}", challengeUrl);
-            
-            // Use JavaScript to navigate to avoid Blazor routing issues
-            await JSRuntime.InvokeVoidAsync("window.location.assign", challengeUrl);
-        }
-        catch (Exception ex)
-        {
-            AddDebugMessage($"❌ Error during login process: {ex.Message}");
-            Logger.LogError(ex, "❌ Error during login process for tenant {Tenant}", tenant);
-            statusMessage = $"Error: {ex.Message}";
-        }
-        finally
-        {
-            // Don't reset these immediately as we're navigating away
-            // isProcessing = false;
-            // selectedTenant = null;
-        }
-    }
+    
 
     protected override void OnInitialized()
     {
         Logger.LogInformation("🎨 Login page initialized with ReturnUrl: {ReturnUrl}", ReturnUrl ?? "null");
         AddDebugMessage($"🎨 Login page initialized");
-        AddDebugMessage($"📝 Return URL parameter: {ReturnUrl ?? "not provided"}");
-        AddDebugMessage($"🌐 Current URL: {Navigation.Uri}");
+        AddDebugMessage($"� Return URL parameter: {ReturnUrl ?? "not provided"}");
+        AddDebugMessage($"� Current URL: {Navigation.Uri}");
+    // Precompute challenge URLs for reliable navigation via anchor tags
+    var r = GetReturnUrl();
+    _fabrikamChallengeUrl = $"/challenge/oidc?tenant=Fabrikam&returnUrl={Uri.EscapeDataString(r)}";
+    _contosoChallengeUrl = $"/challenge/oidc?tenant=Contoso&returnUrl={Uri.EscapeDataString(r)}";
     }
 }
