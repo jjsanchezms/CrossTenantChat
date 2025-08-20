@@ -1,0 +1,618 @@
+@page "/calling"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.JSInterop
+@using Microsoft.AspNetCore.Components.Authorization
+@using CrossTenantChat.Models
+@using System.Security.Claims
+@inject IJSRuntime JS
+@inject ILogger<Calling> Logger
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@attribute [Authorize]
+@rendermode InteractiveServer
+@implements IDisposable
+
+<HeadContent>
+    <!-- Azure Communication Services Calling SDK -->
+    <script src="https://unpkg.com/@@azure/communication-common@@2.5.1/dist/communication-common.min.js"></script>
+    <script src="https://unpkg.com/@@azure/communication-calling@@1.28.7/dist/calling.min.js"></script>
+    <style>
+        #call-container {
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            position: relative;
+        }
+        #call-container.active {
+            background: #000;
+            border: 2px solid #28a745;
+        }
+        .call-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+        }
+        .call-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .video-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            max-width: 100%;
+            max-height: 100%;
+        }
+        .video-container {
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+        .local-video {
+            width: 200px;
+            height: 150px;
+        }
+        .remote-video {
+            width: 300px;
+            height: 225px;
+        }
+        .video-label {
+            position: absolute;
+            bottom: 5px;
+            left: 5px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+        }
+    </style>
+</HeadContent>
+
+<div class="container py-4">
+    <h2 class="mb-3">📞 ACS Voice & Video Calling</h2>
+    <p class="text-muted">Start a new voice or video call using Azure Communication Services.</p>
+
+    @if (currentUser == null && !isLoading)
+    {
+        <div class="row">
+            <div class="col-12 text-center">
+                <div class="alert alert-warning">
+                    <h4>🔐 Authentication Required</h4>
+                    <p>Please log in to access the calling demo.</p>
+                    <a href="/login" class="btn btn-primary">Go to Login</a>
+                </div>
+            </div>
+        </div>
+    }
+    else if (isLoading)
+    {
+        <div class="row">
+            <div class="col-12 text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3">Initializing authentication...</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- User Info Display -->
+        <div class="alert @(currentUser?.IsFromFabrikam == true ? "alert-warning" : "alert-info") mb-4">
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    @(currentUser?.IsFromFabrikam == true ? "🌐" : "🏢")
+                </div>
+                <div>
+                    <strong>@currentUser?.Name</strong> 
+                    <span class="badge @(currentUser?.IsFromFabrikam == true ? "bg-warning" : "bg-info") ms-2">@currentUser?.TenantName</span>
+                    @if (currentUser?.IsFromFabrikam == true)
+                    {
+                        <br><small class="text-muted">Cross-tenant user - authenticated via Fabrikam, calling through Contoso ACS</small>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">📞 Call Settings</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="displayName" class="form-label">Your Display Name</label>
+                        <input id="displayName" class="form-control" @bind="DisplayName" placeholder="Enter your name" />
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="callType" class="form-label">Call Type</label>
+                        <select id="callType" class="form-control" @bind="CallType">
+                            <option value="group">Group Call (New)</option>
+                            <option value="room">Room Call (New)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="videoEnabled" @bind="VideoEnabled">
+                            <label class="form-check-label" for="videoEnabled">
+                                📹 Enable Video
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="audioEnabled" @bind="AudioEnabled">
+                            <label class="form-check-label" for="audioEnabled">
+                                🎤 Enable Audio
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-success" @onclick="StartCall" disabled="@_isConnecting">
+                            @if (_isConnecting)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                            }
+                            🚀 Start New Call
+                        </button>
+                        <button class="btn btn-danger" @onclick="EndCall" disabled="@(!_isInCall)">
+                            📞 End Call
+                        </button>
+                    </div>
+                    
+                    @if (!string.IsNullOrEmpty(_callId))
+                    {
+                        <div class="mt-3 p-2 bg-light rounded">
+                            <small><strong>Call ID:</strong></small><br />
+                            <code style="font-size: 10px;">@_callId</code>
+                            <button class="btn btn-sm btn-outline-secondary ms-2" @onclick="CopyCallId">📋</button>
+                        </div>
+                    }
+                </div>
+            </div>
+            
+            <!-- Call Status -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">📊 Call Status</h6>
+                </div>
+                <div class="card-body">
+                    <p><strong>Status:</strong> <span class="badge @GetStatusBadgeClass()">@_callStatus</span></p>
+                    @if (_participantCount > 0)
+                    {
+                        <p><strong>Participants:</strong> @_participantCount</p>
+                    }
+                    @if (!string.IsNullOrEmpty(_errorMessage))
+                    {
+                        <div class="alert alert-danger alert-sm">
+                            @_errorMessage
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div id="call-container" class="@(_isInCall ? "active" : "")">
+                @if (!_isInCall && !_isConnecting)
+                {
+                    <div class="text-center text-muted">
+                        <i class="display-1">📞</i>
+                        <h4>Ready to Start Call</h4>
+                        <p>Configure your settings and click "Start New Call"</p>
+                    </div>
+                }
+                else if (_isConnecting)
+                {
+                    <div class="text-center text-muted">
+                        <div class="spinner-border text-primary mb-3"></div>
+                        <h5>Connecting...</h5>
+                        <p>Setting up your call</p>
+                    </div>
+                }
+                else
+                {
+                    <div id="video-grid" class="video-grid">
+                        <!-- Video streams will be added here by JavaScript -->
+                    </div>
+                    
+                    @if (_isInCall)
+                    {
+                        <div class="call-info">
+                            <div>Call ID: @_callId?.Substring(0, 8)...</div>
+                            <div>Duration: @_callDuration</div>
+                            <div>Participants: @_participantCount</div>
+                        </div>
+                        
+                        <div class="call-controls">
+                            <button class="btn btn-secondary" @onclick="ToggleAudio">
+                                @(_audioEnabled ? "🎤" : "🔇")
+                            </button>
+                            <button class="btn btn-secondary" @onclick="ToggleVideo">
+                                @(_videoEnabled ? "📹" : "📷")
+                            </button>
+                            <button class="btn btn-danger" @onclick="EndCall">
+                                📞 End
+                            </button>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+    }
+</div>
+
+@code {
+    [CascadingParameter]
+    public Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
+    private IJSObjectReference? _module;
+    
+    // Authentication state
+    private ChatUser? currentUser;
+    private bool isLoading = true;
+    
+    // UI State
+    private bool _isConnecting;
+    private bool _isInCall;
+    private string? _callId;
+    private string _callStatus = "Disconnected";
+    private int _participantCount = 0;
+    private string? _errorMessage;
+    private string _callDuration = "00:00";
+    
+    // User Settings
+    public string DisplayName { get; set; } = "ACS User";
+    public string CallType { get; set; } = "group";
+    public bool VideoEnabled { get; set; } = true;
+    public bool AudioEnabled { get; set; } = true;
+    
+    // Internal state
+    private bool _audioEnabled = true;
+    private bool _videoEnabled = true;
+    private System.Threading.Timer? _durationTimer;
+    private DateTime _callStartTime;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                Logger.LogInformation("Loading ACS Calling module...");
+                _module = await JS.InvokeAsync<IJSObjectReference>("import", "/js/acs-calling.js");
+                Logger.LogInformation("ACS Calling module loaded successfully");
+                
+                // Check if libraries are available
+                var commonAvailable = await JS.InvokeAsync<bool>("eval", "typeof window.AzureCommuncation !== 'undefined' || typeof window.Azure !== 'undefined'");
+                var callingAvailable = await JS.InvokeAsync<bool>("eval", "typeof window.AzureCommunicationCalling !== 'undefined'");
+                Logger.LogInformation("Library availability - Common: {Common}, Calling: {Calling}", commonAvailable, callingAvailable);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Failed to load ACS Calling module");
+                _errorMessage = $"Failed to load calling module: {ex.Message}";
+                StateHasChanged();
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Logger.LogInformation("🚀 ACS Calling Demo initialized");
+        
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            if (authState.User.Identity?.IsAuthenticated == true)
+            {
+                Logger.LogInformation("✅ User is authenticated, initializing user data");
+                await InitializeAuthenticatedUser(authState.User);
+            }
+            else
+            {
+                Logger.LogInformation("⚠️ User is not authenticated");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Error checking authentication state");
+        }
+        
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    protected override void OnInitialized()
+    {
+        // React to sign-in/sign-out without requiring a full page reload
+        AuthenticationStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
+    }
+
+    private void OnAuthenticationStateChanged(Task<AuthenticationState> task)
+    {
+        _ = InvokeAsync(async () =>
+        {
+            try
+            {
+                isLoading = true;
+                StateHasChanged();
+
+                var state = await task;
+                if (state.User.Identity?.IsAuthenticated == true)
+                {
+                    Logger.LogInformation("🔄 Auth state changed: user authenticated -> refreshing user profile");
+                    await InitializeAuthenticatedUser(state.User);
+                }
+                else
+                {
+                    Logger.LogInformation("🔄 Auth state changed: user signed out");
+                    currentUser = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error handling authentication state change");
+            }
+            finally
+            {
+                isLoading = false;
+                StateHasChanged();
+            }
+        });
+    }
+
+    private async Task InitializeAuthenticatedUser(ClaimsPrincipal user)
+    {
+        try
+        {
+            Logger.LogInformation("🔐 Initializing authenticated user for calling");
+
+            // Extract user information from claims
+            var nameIdentifier = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? 
+                               user.FindFirst("oid")?.Value ?? 
+                               user.FindFirst("sub")?.Value;
+                               
+            var name = user.FindFirst(ClaimTypes.Name)?.Value ?? 
+                      user.FindFirst("name")?.Value ??
+                      user.Identity?.Name ??
+                      user.FindFirst("preferred_username")?.Value ??
+                      user.FindFirst("upn")?.Value;
+                      
+            var email = user.FindFirst(ClaimTypes.Email)?.Value ?? 
+                       user.FindFirst("preferred_username")?.Value ??
+                       user.FindFirst("email")?.Value ??
+                       user.FindFirst("upn")?.Value;
+                       
+            var tenantId = user.FindFirst("tid")?.Value ?? 
+                          user.FindFirst("tenant_id")?.Value;
+                          
+            var tenant = user.FindFirst("tenant")?.Value;
+
+            Logger.LogInformation("📋 Claims found - ID: {Id}, Name: {Name}, Email: {Email}, TenantId: {TenantId}, Tenant: {Tenant}", 
+                nameIdentifier, name, email, tenantId, tenant);
+
+            if (string.IsNullOrEmpty(nameIdentifier))
+            {
+                Logger.LogError("❌ No user identifier found in claims");
+                return;
+            }
+
+            // Determine if this is a cross-tenant user
+            var fabrikamTenantId = "307083d3-52ba-4934-a29a-97cefcedc6a6";
+            bool isFromFabrikam = tenantId == fabrikamTenantId || tenant == "Fabrikam";
+            string tenantName = isFromFabrikam ? "Fabrikam" : "Contoso";
+
+            currentUser = new ChatUser
+            {
+                Id = nameIdentifier,
+                Name = string.IsNullOrWhiteSpace(name) ? (email ?? "Unknown User") : name,
+                Email = email ?? "",
+                TenantId = tenantId ?? "",
+                TenantName = tenantName,
+                IsFromFabrikam = isFromFabrikam,
+                AccessToken = "" // Will be populated by ACS calling token
+            };
+
+            // Update the display name input with the authenticated user's name
+            DisplayName = currentUser.Name;
+
+            Logger.LogInformation("✅ User initialized for calling: {UserName} from {TenantName} ({TenantId})", 
+                currentUser.Name, tenantName, tenantId);
+                
+            if (currentUser.IsFromFabrikam)
+            {
+                Logger.LogInformation("🌐 Cross-tenant calling: Fabrikam user will call through Contoso ACS");
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Error initializing authenticated user for calling");
+        }
+    }
+
+    private async Task StartCall()
+    {
+        if (_module == null)
+        {
+            _errorMessage = "Calling module not loaded";
+            StateHasChanged();
+            return;
+        }
+
+        try
+        {
+            _isConnecting = true;
+            _errorMessage = null;
+            _callStatus = "Connecting...";
+            StateHasChanged();
+
+            Logger.LogInformation("Starting new {CallType} call with display name: {DisplayName}", CallType, DisplayName);
+
+            // Get ACS token
+            var tokenResponse = await _module.InvokeAsync<object>("acsCall.getToken", "/api/calling/token");
+            
+            // Start the call
+            var callInfo = await _module.InvokeAsync<object>("acsCall.startCall", new 
+            {
+                displayName = DisplayName,
+                video = VideoEnabled,
+                audio = AudioEnabled,
+                callType = CallType
+            });
+
+            // Use reflection or dynamic to get call ID
+            var callInfoJson = System.Text.Json.JsonSerializer.Serialize(callInfo);
+            var callInfoDoc = System.Text.Json.JsonDocument.Parse(callInfoJson);
+            
+            if (callInfoDoc.RootElement.TryGetProperty("callId", out var callIdProp))
+            {
+                _callId = callIdProp.GetString();
+            }
+
+            _isInCall = true;
+            _isConnecting = false;
+            _callStatus = "Connected";
+            _callStartTime = DateTime.Now;
+            _audioEnabled = AudioEnabled;
+            _videoEnabled = VideoEnabled;
+            
+            StartDurationTimer();
+
+            Logger.LogInformation("Call started successfully with ID: {CallId}", _callId);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to start call");
+            _errorMessage = $"Failed to start call: {ex.Message}";
+            _isConnecting = false;
+            _callStatus = "Failed";
+            StateHasChanged();
+        }
+    }
+
+    private async Task EndCall()
+    {
+        if (_module == null) return;
+
+        try
+        {
+            await _module.InvokeVoidAsync("acsCall.endCall");
+            
+            _isInCall = false;
+            _callStatus = "Disconnected";
+            _callId = null;
+            _participantCount = 0;
+            StopDurationTimer();
+            
+            Logger.LogInformation("Call ended");
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error ending call");
+            _errorMessage = $"Error ending call: {ex.Message}";
+            StateHasChanged();
+        }
+    }
+
+    private async Task ToggleAudio()
+    {
+        if (_module == null || !_isInCall) return;
+
+        try
+        {
+            _audioEnabled = !_audioEnabled;
+            await _module.InvokeVoidAsync("acsCall.toggleAudio", _audioEnabled);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error toggling audio");
+        }
+    }
+
+    private async Task ToggleVideo()
+    {
+        if (_module == null || !_isInCall) return;
+
+        try
+        {
+            _videoEnabled = !_videoEnabled;
+            await _module.InvokeVoidAsync("acsCall.toggleVideo", _videoEnabled);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error toggling video");
+        }
+    }
+
+    private async Task CopyCallId()
+    {
+        if (!string.IsNullOrEmpty(_callId))
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", _callId);
+        }
+    }
+
+    private string GetStatusBadgeClass()
+    {
+        return _callStatus switch
+        {
+            "Connected" => "bg-success",
+            "Connecting..." => "bg-warning",
+            "Failed" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private void StartDurationTimer()
+    {
+        _durationTimer = new System.Threading.Timer(UpdateDuration, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
+    }
+
+    private void StopDurationTimer()
+    {
+        _durationTimer?.Dispose();
+        _durationTimer = null;
+        _callDuration = "00:00";
+    }
+
+    private void UpdateDuration(object? state)
+    {
+        if (_isInCall)
+        {
+            var duration = DateTime.Now - _callStartTime;
+            _callDuration = duration.ToString(@"mm\:ss");
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    public void Dispose()
+    {
+        AuthenticationStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
+        StopDurationTimer();
+        _module?.DisposeAsync();
+    }
+}

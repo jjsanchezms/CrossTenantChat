@@ -1,0 +1,453 @@
+@using CrossTenantChat.Models
+@using CrossTenantChat.Services
+@using System.Text.Json
+@inject IConfiguration Configuration
+@inject IAzureCommunicationService AcsService
+@inject IAcsOperationTracker OperationTracker
+@inject ILogger<AcsDebugPanelEnhanced> Logger
+@implements IDisposable
+
+<div class="@(FooterStyle ? "acs-debug-footer" : (Inline ? "mt-3 border-top pt-2" : "card mt-3"))">
+    <div class="@(FooterStyle || Inline ? "" : "card-header ") d-flex justify-content-between align-items-center">
+        <button class="btn btn-link p-0 text-decoration-none" @onclick="Toggle" aria-expanded="@(!_collapsed)">
+            <span class="me-1">@(_collapsed ? "►" : "▼")</span>
+            <span class="fw-semibold">🧭 ACS Debug Info</span>
+        </button>
+        <span class="badge bg-@(IsLive ? "primary" : "secondary")">@(IsLive ? "Live" : "Demo")</span>
+    </div>
+    @if (!_collapsed)
+    {
+        <div class="@(FooterStyle || Inline ? "small" : "card-body small")">
+            <div class="mb-2">
+                <div class="text-muted">Service Mode</div>
+                <div class="fw-semibold">@ServiceTypeName</div>
+            </div>
+            <div class="mb-2">
+                <div class="text-muted">Environment</div>
+                <div class="fw-semibold">@EnvironmentName</div>
+            </div>
+            <hr />
+            <div class="mb-2">
+                <div class="text-muted">ACS Endpoint</div>
+                <div class="text-break">@AcsEndpoint</div>
+            </div>
+            <div class="mb-2">
+                <div class="text-muted">ACS Resource Id</div>
+                <div class="text-break">@AcsResourceId</div>
+            </div>
+            <hr />
+            <div class="mb-2">
+                <div class="text-muted">User Tenant</div>
+                <div>
+                    <span class="fw-semibold">@User?.TenantName</span>
+                    @if (!string.IsNullOrEmpty(User?.TenantId))
+                    {
+                        <span class="text-muted ms-1">(@User?.TenantId)</span>
+                    }
+                </div>
+            </div>
+            <div class="mb-2">
+                <div class="text-muted">User</div>
+                <div class="text-break">@User?.Name (@User?.Email)</div>
+            </div>
+            <div class="mb-2">
+                <div class="text-muted">ACS User Id</div>
+                <div class="text-break">@DisplayAcsUserId</div>
+            </div>
+            <div class="mb-2">
+                <div class="text-muted">ACS User MRI</div>
+                <div class="text-break">@DisplayAcsUserMri</div>
+            </div>
+            <div class="mb-2">
+                <div class="text-muted">Token</div>
+                <div>
+                    <span class="@(HasToken ? "text-success" : "text-danger")">@(HasToken ? "Available" : "Missing")</span>
+                    @if (TokenExpiryDisplay is string exp1)
+                    {
+                        <span class="text-muted ms-2">exp @exp1 UTC</span>
+                    }
+                </div>
+                @if (HasToken)
+                {
+                    <button class="btn btn-sm btn-outline-secondary mt-1" @onclick="ToggleTokenDetails" type="button">
+                        @(_showTokenDetails ? "Hide" : "Show") Token Info
+                    </button>
+                    @if (_showTokenDetails)
+                    {
+                        <div class="mt-2 p-2 bg-light border rounded small">
+                            <div class="mb-2"><strong>Token Details (JSON):</strong></div>
+                            <pre style="font-size: 0.75rem; max-height: 200px; overflow-y: auto; white-space: pre-wrap;">@GetTokenInfoJson()</pre>
+                        </div>
+                    }
+                }
+            </div>
+            @if (Thread != null)
+            {
+                <hr />
+                <div class="mb-2">
+                    <div class="text-muted">Current Thread</div>
+                    <div class="fw-semibold">@Thread!.Topic</div>
+                    <div class="text-muted">@Thread!.Id</div>
+                </div>
+                <div class="mb-2">
+                    <div class="text-muted">Cross-tenant</div>
+                    <div>@(Thread!.IsCrossTenant ? "Yes 🌐" : "No")</div>
+                </div>
+                <div class="mb-1">
+                    <div class="text-muted">Participants</div>
+                    <div>
+                        @foreach (var p in Thread!.Participants)
+                        {
+                            <div class="text-wrap">• @p.Name (@p.TenantName)
+                                <div class="text-muted small">@GetParticipantMri(p)</div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            <hr />
+            <div class="mb-2">
+                <button class="btn btn-link p-0 text-decoration-none" @onclick="ToggleOperations" aria-expanded="@(!_operationsCollapsed)">
+                    <span class="me-1">@(_operationsCollapsed ? "►" : "▼")</span>
+                    <span class="fw-semibold">🔍 Operation History</span>
+                </button>
+            </div>
+            @if (!_operationsCollapsed)
+            {
+                <div class="operation-history-container" style="max-height: 400px; overflow-y: auto;">
+                    @{
+                        var recentOps = GetRecentOperations();
+                    }
+                    @if (recentOps.Any())
+                    {
+                        @foreach (var op in recentOps)
+                        {
+                            <div class="operation-item mb-3 p-2 border rounded" style="border-left: 4px solid @(op.IsSuccessful ? "#198754" : "#dc3545");">
+                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                    <div class="fw-semibold">
+                                        @GetOperationIcon(op.OperationType) @op.OperationType
+                                    </div>
+                                    <small class="text-muted">@op.StartTime.ToString("HH:mm:ss.fff")</small>
+                                </div>
+                                <div class="small text-muted mb-1">@op.Description</div>
+                                @if (!string.IsNullOrEmpty(op.UserId))
+                                {
+                                    <div class="small text-muted mb-2">User: @op.UserId (@op.TenantName)</div>
+                                }
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="badge bg-@(op.IsSuccessful ? "success" : "danger")">
+                                        @(op.IsSuccessful ? "Success" : "Failed")
+                                    </span>
+                                    @if (op.Duration.HasValue)
+                                    {
+                                        <small class="text-muted">Duration: @op.Duration.Value.TotalMilliseconds.ToString("F0")ms</small>
+                                    }
+                                    else if (op.IsCompleted == false)
+                                    {
+                                        <small class="text-warning">In Progress...</small>
+                                    }
+                                </div>
+                                @if (!string.IsNullOrEmpty(op.ErrorMessage))
+                                {
+                                    <div class="small text-danger mb-2">
+                                        <strong>Error:</strong> @op.ErrorMessage
+                                    </div>
+                                }
+                                @if (op.Steps.Any())
+                                {
+                                    <button class="btn btn-sm btn-outline-secondary" @onclick="() => ToggleOperationSteps(op.Id)">
+                                        @(IsOperationStepsExpanded(op.Id) ? "Hide" : "Show") Steps (@op.Steps.Count)
+                                    </button>
+                                    @if (IsOperationStepsExpanded(op.Id))
+                                    {
+                                        <div class="mt-2">
+                                            @foreach (var step in op.Steps)
+                                            {
+                                                <div class="step-item d-flex align-items-start mb-1 ps-3" style="border-left: 2px solid @(step.IsSuccessful ? "#28a745" : "#dc3545");">
+                                                    <span class="me-2 @(step.IsSuccessful ? "text-success" : "text-danger")">
+                                                        @(step.IsSuccessful ? "✓" : "✗")
+                                                    </span>
+                                                    <div class="flex-grow-1">
+                                                        <div class="small fw-semibold">@step.StepName</div>
+                                                        <div class="small text-muted">@step.Description</div>
+                                                        @if (!string.IsNullOrEmpty(step.ErrorMessage))
+                                                        {
+                                                            <div class="small text-danger">@step.ErrorMessage</div>
+                                                        }
+                                                        @if (step.Metadata.Any())
+                                                        {
+                                                            <div class="small text-muted">
+                                                                @foreach (var meta in step.Metadata.Take(3))
+                                                                {
+                                                                    <span class="me-2">@meta.Key: @meta.Value</span>
+                                                                }
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                    <small class="text-muted">@step.Timestamp.ToString("HH:mm:ss")</small>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-muted text-center py-3">
+                            <em>No operations recorded yet. Send a message to see ACS operations!</em>
+                        </div>
+                    }
+                </div>
+                <div class="mt-2">
+                    <button class="btn btn-sm btn-outline-secondary me-2" @onclick="RefreshOperations">
+                        🔄 Refresh
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning" @onclick="ClearOperations">
+                        🧹 Clear History
+                    </button>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public ChatUser? User { get; set; }
+    [Parameter] public ChatThread? Thread { get; set; }
+    [Parameter] public bool InitiallyCollapsed { get; set; } = true;
+    [Parameter] public bool Inline { get; set; } = false;
+    [Parameter] public bool FooterStyle { get; set; } = false;
+
+    private bool _collapsed;
+    private bool _showTokenDetails = false;
+    private bool _operationsCollapsed = true;
+    private HashSet<string> _expandedOperations = new();
+    private string? _acsFetchUserId;
+    private Timer? _operationRefreshTimer;
+
+    private string EnvironmentName => System.Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Unknown";
+    private string ServiceTypeName => AcsService?.GetType().Name ?? "(unknown)";
+    private bool IsLive => ServiceTypeName.Contains("Live", StringComparison.OrdinalIgnoreCase);
+    private string AcsEndpoint => Configuration?["Azure:AzureCommunicationServices:EndpointUrl"] ?? ParseEndpointFromConnectionString() ?? "(not configured)";
+    private string AcsResourceId => Configuration?["Azure:AzureCommunicationServices:ResourceId"] ?? "(not configured)";
+    private bool HasToken => !string.IsNullOrWhiteSpace(User?.AcsAccessToken);
+    private string DisplayAcsUserId => string.IsNullOrWhiteSpace(User?.AcsUserId) ? "(none)" : (User?.AcsUserId ?? "(none)");
+    private string DisplayAcsUserMri => string.IsNullOrWhiteSpace(User?.AcsUserId)
+        ? "(none)"
+        : (User!.AcsUserId.StartsWith("8:") ? User!.AcsUserId : $"8:acs:{User!.AcsUserId}");
+    private string? TokenExpiryDisplay => (User?.TokenExpiry ?? default) != default ? User!.TokenExpiry.ToString("HH:mm:ss") : null;
+
+    private string? ParseEndpointFromConnectionString()
+    {
+        var cs = Configuration?["Azure:AzureCommunicationServices:ConnectionString"];
+        if (string.IsNullOrWhiteSpace(cs)) return null;
+        var parts = cs.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var endpointPart = parts.FirstOrDefault(p => p.StartsWith("endpoint=", StringComparison.OrdinalIgnoreCase));
+        return endpointPart?.Substring("endpoint=".Length);
+    }
+
+    protected override void OnInitialized()
+    {
+        _collapsed = InitiallyCollapsed;
+        
+        if (!_operationsCollapsed)
+        {
+            StartOperationRefreshTimer();
+        }
+    }
+
+    private void StartOperationRefreshTimer()
+    {
+        _operationRefreshTimer?.Dispose();
+        _operationRefreshTimer = new Timer(async _ =>
+        {
+            try
+            {
+                await InvokeAsync(() =>
+                {
+                    StateHasChanged();
+                });
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error refreshing operation history");
+            }
+        }, null, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
+    }
+
+    private void StopOperationRefreshTimer()
+    {
+        _operationRefreshTimer?.Dispose();
+        _operationRefreshTimer = null;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!IsLive || User is null)
+            return;
+
+        var needsAcs = string.IsNullOrWhiteSpace(User.AcsUserId) || string.IsNullOrWhiteSpace(User.AcsAccessToken);
+        if (!needsAcs && User.TokenExpiry > DateTime.UtcNow.AddMinutes(5))
+            return;
+
+        if (!string.IsNullOrWhiteSpace(_acsFetchUserId) && _acsFetchUserId == User.Id && !needsAcs)
+            return;
+
+        try
+        {
+            _acsFetchUserId = User.Id;
+            var result = await AcsService.ExchangeEntraIdTokenForAcsTokenAsync(User);
+            if (result.IsSuccess)
+            {
+                if (result.ExpiresOn != default)
+                {
+                    User.TokenExpiry = result.ExpiresOn.ToUniversalTime();
+                }
+                StateHasChanged();
+            }
+            else
+            {
+                Logger.LogWarning("ACS token exchange failed in debug panel: {Error}", result.ErrorMessage);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error fetching ACS identity in debug panel for user {UserId}", User.Id);
+        }
+    }
+
+    private void Toggle()
+    {
+        _collapsed = !_collapsed;
+    }
+
+    private void ToggleTokenDetails()
+    {
+        _showTokenDetails = !_showTokenDetails;
+    }
+
+    private void ToggleOperations()
+    {
+        _operationsCollapsed = !_operationsCollapsed;
+        
+        if (!_operationsCollapsed)
+        {
+            StartOperationRefreshTimer();
+        }
+        else
+        {
+            StopOperationRefreshTimer();
+        }
+        
+        StateHasChanged();
+    }
+
+    private void ToggleOperationSteps(string operationId)
+    {
+        if (_expandedOperations.Contains(operationId))
+        {
+            _expandedOperations.Remove(operationId);
+        }
+        else
+        {
+            _expandedOperations.Add(operationId);
+        }
+        StateHasChanged();
+    }
+
+    private bool IsOperationStepsExpanded(string operationId)
+    {
+        return _expandedOperations.Contains(operationId);
+    }
+
+    private List<AcsOperation> GetRecentOperations()
+    {
+        try
+        {
+            return OperationTracker?.GetRecentOperations(10) ?? new List<AcsOperation>();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error getting recent operations");
+            return new List<AcsOperation>();
+        }
+    }
+
+    private string GetOperationIcon(string operationType)
+    {
+        return operationType switch
+        {
+            "TokenExchange" => "🔑",
+            "EntraIdTokenValidation" => "🔐",
+            "ThreadCreation" => "💬",
+            "MessageSend" => "📤",
+            "UserCreation" => "👤",
+            _ => "⚙️"
+        };
+    }
+
+    private void RefreshOperations()
+    {
+        StateHasChanged();
+    }
+
+    private void ClearOperations()
+    {
+        try
+        {
+            OperationTracker?.ClearOperations();
+            _expandedOperations.Clear();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error clearing operations");
+        }
+    }
+
+    private string GetTokenInfoJson()
+    {
+        if (User?.AcsAccessToken == null) return "No token available";
+
+        try
+        {
+            var tokenInfo = new
+            {
+                hasToken = HasToken,
+                tokenLength = User.AcsAccessToken?.Length ?? 0,
+                tokenPreview = User.AcsAccessToken?.Length > 20 ? 
+                    User.AcsAccessToken.Substring(0, 20) + "..." : User.AcsAccessToken,
+                expiresOn = User.TokenExpiry,
+                isExpired = User.TokenExpiry < DateTime.UtcNow,
+                timeUntilExpiry = User.TokenExpiry > DateTime.UtcNow ? 
+                    (User.TokenExpiry - DateTime.UtcNow).ToString(@"hh\:mm\:ss") : "EXPIRED",
+                acsUserId = User.AcsUserId,
+                tenantName = User.TenantName,
+                isFromFabrikam = User.IsFromFabrikam
+            };
+
+            return JsonSerializer.Serialize(tokenInfo, new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+        }
+        catch (Exception ex)
+        {
+            return $"Error formatting token info: {ex.Message}";
+        }
+    }
+
+    private string GetParticipantMri(ChatUser p)
+    {
+        if (string.IsNullOrWhiteSpace(p.AcsUserId)) return "(no ACS user)";
+        return p.AcsUserId.StartsWith("8:") ? p.AcsUserId : $"8:acs:{p.AcsUserId}";
+    }
+
+    public void Dispose()
+    {
+        StopOperationRefreshTimer();
+    }
+}

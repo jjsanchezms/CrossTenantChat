@@ -37,15 +37,13 @@ cd Infrastructure
 ./deploy-azure-resources.ps1
 ./setup-app-registrations.ps1 -ContosoTenantId "<contoso-tenant-guid>" -FabrikamTenantId "<fabrikam-tenant-guid>"
 
-# Back to app root and run in Live mode
+# Back to app root and run
 cd ..
-$env:ASPNETCORE_ENVIRONMENT="Live"
-dotnet run --project CrossTenantChat.csproj --no-launch-profile
+dotnet run
 ```
 
 Configuration
-- Base: `appsettings.json`
-- Live overrides: `appsettings.Live.json`
+- All settings: `appsettings.json` (now contains production configuration)
 - Useful UI options: `Chat:AutoRefreshEnabled` (bool), `Chat:AutoRefreshIntervalMs` (500–10000)
 
 ## Project layout (short)
@@ -64,7 +62,7 @@ CrossTenantChat/
 
 ## Troubleshooting (quick)
 - Build locking on Windows: if `CrossTenantChat.exe` is in use, stop the running process and rebuild.
-- Live config not loading: ensure `ASPNETCORE_ENVIRONMENT` is set to `Live` before running.
+- Configuration: all settings are now in `appsettings.json` - no environment switching needed.
 
 ## References
 - Azure Communication Services docs: https://learn.microsoft.com/azure/communication-services/

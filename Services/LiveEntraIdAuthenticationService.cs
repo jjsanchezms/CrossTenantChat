@@ -13,6 +13,7 @@ public class LiveEntraIdAuthenticationService : IEntraIdAuthenticationService
     private readonly ILogger<LiveEntraIdAuthenticationService> _logger;
     private readonly IConfiguration _configuration;
     private readonly IMemoryCache _memoryCache;
+    private readonly IAcsOperationTracker _operationTracker;
     
     private readonly IConfidentialClientApplication _contosoApp;
     private readonly IConfidentialClientApplication _fabrikamApp;
@@ -32,11 +33,13 @@ public class LiveEntraIdAuthenticationService : IEntraIdAuthenticationService
     public LiveEntraIdAuthenticationService(
         ILogger<LiveEntraIdAuthenticationService> logger,
         IConfiguration configuration,
-        IMemoryCache memoryCache)
+        IMemoryCache memoryCache,
+        IAcsOperationTracker operationTracker)
     {
         _logger = logger;
         _configuration = configuration;
         _memoryCache = memoryCache;
+        _operationTracker = operationTracker;
 
         // Load configuration
         _contosoTenantId = configuration["Azure:AzureAd:ContosoTenantId"] ?? throw new InvalidOperationException("ContosoTenantId not configured");
@@ -66,10 +69,16 @@ public class LiveEntraIdAuthenticationService : IEntraIdAuthenticationService
 
     public async Task<Models.TokenExchangeResult> ValidateAndExchangeTokenAsync(string bearerToken)
     {
+        var operationId = _operationTracker.StartOperation("EntraIdTokenValidation", 
+            "Validate and exchange Entra ID bearer token");
+
         var result = new Models.TokenExchangeResult();
         
         try
         {
+            _operationTracker.AddStep(operationId, "InitiateValidation", 
+                "Starting token validation and exchange process", true);
+
             _logger.LogInformation("Starting token validation and exchange process");
 
             // Remove "Bearer " prefix if present
@@ -77,7 +86,18 @@ public class LiveEntraIdAuthenticationService : IEntraIdAuthenticationService
                 ? bearerToken.Substring(7) 
                 : bearerToken;
 
+            _operationTracker.AddStep(operationId, "ProcessTokenFormat", 
+                "Processed bearer token format", true, 
+                new Dictionary<string, object> 
+                { 
+                    ["HasBearerPrefix"] = bearerToken.StartsWith("Bearer "),
+                    ["TokenLength"] = token.Length
+                });
+
             // Parse the JWT token to extract user information
+            _operationTracker.AddStep(operationId, "ParseJwt", 
+                "Parsing JWT token to extract user information", true);
+
             var handler = new JwtSecurityTokenHandler();
             var jsonToken = handler.ReadJwtToken(token);
             
@@ -88,16 +108,35 @@ public class LiveEntraIdAuthenticationService : IEntraIdAuthenticationService
             if (userIdClaim == null || tenantIdClaim == null)
             {
                 result.ErrorMessage = "Required claims not found in token";
+                _operationTracker.AddStep(operationId, "ParseJwt", 
+                    "Failed to extract required claims from JWT token", false, null, result.ErrorMessage);
+                _operationTracker.CompleteOperation(operationId, false, result.ErrorMessage);
                 return result;
             }
 
             var tokenTenantId = tenantIdClaim.Value;
+            var userId = userIdClaim.Value;
+            var userName = userNameClaim?.Value ?? "Unknown";
+
             _logger.LogInformation("Token issued by tenant: {TokenTenantId}", tokenTenantId);
+
+            _operationTracker.AddStep(operationId, "ParseJwt", 
+                "Successfully parsed JWT token and extracted claims", true, 
+                new Dictionary<string, object> 
+                { 
+                    ["UserId"] = userId,
+                    ["UserName"] = userName,
+                    ["TenantId"] = tokenTenantId,
+                    ["ClaimsCount"] = jsonToken.Claims.Count()
+                });
 
             // Extract claims for the result
             result.Claims = jsonToken.Claims.ToDictionary(c => c.Type, c => (object)c.Value);
 
             // Determine which tenant this token is from
+            _operationTracker.AddStep(operationId, "DetermineTenant", 
+                $"Determining tenant for token issued by: {tokenTenantId}", true);
+
             string selectedTenant;
             IConfidentialClientApplication msalApp;
             
@@ -114,11 +153,32 @@ public class LiveEntraIdAuthenticationService : IEntraIdAuthenticationService
             else
             {
                 result.ErrorMessage = $"Token is from unknown tenant: {tokenTenantId}";
+                _operationTracker.AddStep(operationId, "DetermineTenant", 
+                    "Token is from unknown tenant", false, 
+                    new Dictionary<string, object> 
+                    { 
+                        ["TokenTenantId"] = tokenTenantId,
+                        ["ContosoTenantId"] = _contosoTenantId,
+                        ["FabrikamTenantId"] = _fabrikamTenantId
+                    }, result.ErrorMessage);
+                _operationTracker.CompleteOperation(operationId, false, result.ErrorMessage);
                 return result;
             }
 
+            _operationTracker.AddStep(operationId, "DetermineTenant", 
+                $"Successfully identified tenant: {selectedTenant}", true, 
+                new Dictionary<string, object> 
+                { 
+                    ["SelectedTenant"] = selectedTenant,
+                    ["TokenTenantId"] = tokenTenantId
+                });
+
             // Check cache for existing ACS token
             var cacheKey = $"acs_token_{userIdClaim.Value}_{selectedTenant}";
+            
+            _operationTracker.AddStep(operationId, "CheckCache", 
+                $"Checking cache for existing ACS token: {cacheKey}", true);
+
             if (_memoryCache.TryGetValue(cacheKey, out string? cachedAcsToken))
             {
                 _logger.LogInformation("Retrieved cached ACS token for user: {UserId}", userIdClaim.Value);
@@ -126,18 +186,59 @@ public class LiveEntraIdAuthenticationService : IEntraIdAuthenticationService
                 result.AccessToken = cachedAcsToken ?? "";
                 result.ExpiresOn = jsonToken.ValidTo;
                 result.AcsUserId = GenerateAcsUserId(userIdClaim.Value);
+                
+                _operationTracker.AddStep(operationId, "CheckCache", 
+                    "Found cached ACS token", true, 
+                    new Dictionary<string, object> 
+                    { 
+                        ["CacheKey"] = cacheKey,
+                        ["TokenExpiresOn"] = result.ExpiresOn,
+                        ["AcsUserId"] = result.AcsUserId
+                    });
+                
+                _operationTracker.CompleteOperation(operationId, true);
                 return result;
             }
 
+            _operationTracker.AddStep(operationId, "CheckCache", 
+                "No cached ACS token found, proceeding to exchange", true);
+
             // Create user assertion from the provided access token
+            _operationTracker.AddStep(operationId, "CreateAssertion", 
+                "Creating user assertion for On-Behalf-Of flow", true);
+
             var userAssertion = new UserAssertion(token);
             
             // Acquire token for ACS using On-Behalf-Of flow
+            _operationTracker.AddStep(operationId, "AcquireToken", 
+                $"Acquiring ACS token using On-Behalf-Of flow for {selectedTenant} tenant", true, 
+                new Dictionary<string, object> 
+                { 
+                    ["Tenant"] = selectedTenant,
+                    ["Scopes"] = string.Join(",", _acsScopes)
+                });
+
             var msalResult = await msalApp.AcquireTokenOnBehalfOf(_acsScopes, userAssertion)
                 .ExecuteAsync();
 
+            _operationTracker.AddStep(operationId, "AcquireToken", 
+                "Successfully acquired ACS token via On-Behalf-Of flow", true, 
+                new Dictionary<string, object> 
+                { 
+                    ["TokenExpiresOn"] = msalResult.ExpiresOn.DateTime,
+                    ["TokenType"] = "ACS Access Token"
+                });
+
             // Cache the ACS token for 50 minutes (tokens are valid for 60 minutes)
             _memoryCache.Set(cacheKey, msalResult.AccessToken, TimeSpan.FromMinutes(50));
+
+            _operationTracker.AddStep(operationId, "CacheToken", 
+                "Cached ACS token for future use", true, 
+                new Dictionary<string, object> 
+                { 
+                    ["CacheKey"] = cacheKey,
+                    ["CacheExpiry"] = TimeSpan.FromMinutes(50).ToString()
+                });
 
             _logger.LogInformation("Successfully exchanged token for ACS access. User: {UserId}, Tenant: {Tenant}", 
                 userIdClaim.Value, selectedTenant);
@@ -146,19 +247,53 @@ public class LiveEntraIdAuthenticationService : IEntraIdAuthenticationService
             result.AccessToken = msalResult.AccessToken;
             result.ExpiresOn = msalResult.ExpiresOn.DateTime;
             result.AcsUserId = GenerateAcsUserId(userIdClaim.Value);
-            
+
+            if (selectedTenant == "Fabrikam")
+            {
+                _operationTracker.AddStep(operationId, "CrossTenantExchange", 
+                    "Cross-tenant token exchange completed - Fabrikam token exchanged for Contoso ACS access", true, 
+                    new Dictionary<string, object> 
+                    { 
+                        ["SourceTenant"] = "Fabrikam",
+                        ["TargetResource"] = "Contoso ACS",
+                        ["UserId"] = userId,
+                        ["UserName"] = userName
+                    });
+            }
+
+            _operationTracker.CompleteOperation(operationId, true);
             return result;
         }
         catch (MsalException ex)
         {
             _logger.LogError(ex, "MSAL exception during token exchange: {Error}", ex.Message);
             result.ErrorMessage = $"Authentication failed: {ex.Message}";
+            
+            _operationTracker.AddStep(operationId, "MsalException", 
+                "MSAL exception during token exchange", false, 
+                new Dictionary<string, object> 
+                { 
+                    ["ExceptionType"] = ex.GetType().Name,
+                    ["ErrorCode"] = ex.ErrorCode
+                }, ex.Message);
+            
+            _operationTracker.CompleteOperation(operationId, false, result.ErrorMessage);
             return result;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during token validation and exchange: {Error}", ex.Message);
             result.ErrorMessage = $"Token validation failed: {ex.Message}";
+            
+            _operationTracker.AddStep(operationId, "Exception", 
+                "General exception during token validation", false, 
+                new Dictionary<string, object> 
+                { 
+                    ["ExceptionType"] = ex.GetType().Name,
+                    ["ExceptionMessage"] = ex.Message
+                }, ex.Message);
+            
+            _operationTracker.CompleteOperation(operationId, false, result.ErrorMessage);
             return result;
         }
     }

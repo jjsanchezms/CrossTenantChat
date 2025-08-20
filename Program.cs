@@ -17,51 +17,38 @@ var builder = WebApplication.CreateBuilder(args);
 // Configure static web assets for all environments (when running from source)
 // This enables component library and wwwroot assets even when not using a publish output
 StaticWebAssetsLoader.UseStaticWebAssets(builder.Environment, builder.Configuration);
-if (builder.Environment.IsDevelopment())
+
+// Add Azure Key Vault configuration
+var keyVaultUri = builder.Configuration["Azure:KeyVault:VaultUri"];
+var keyVaultEnabled = builder.Configuration.GetValue<bool?>("Azure:KeyVault:Enabled") ?? true;
+var preferAzureCli = builder.Configuration.GetValue<bool>("Azure:KeyVault:PreferAzureCliCredential");
+var enableInteractiveBrowser = builder.Configuration.GetValue<bool>("Azure:KeyVault:EnableInteractiveBrowserCredential");
+
+if (keyVaultEnabled && !string.IsNullOrEmpty(keyVaultUri))
 {
-    // Also enable legacy dev-time static web assets hook
-    builder.WebHost.UseStaticWebAssets();
-}
-
-// Environment-specific configuration
-var environment = builder.Environment.EnvironmentName;
-builder.Configuration.AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true);
-
-// Add Azure Key Vault if running in Live environment
-if (environment == "Live")
-{
-    var keyVaultUri = builder.Configuration["Azure:KeyVault:VaultUri"];
-    var keyVaultEnabled = builder.Configuration.GetValue<bool?>("Azure:KeyVault:Enabled") ?? true;
-    var preferAzureCli = builder.Configuration.GetValue<bool>("Azure:KeyVault:PreferAzureCliCredential");
-    var enableInteractiveBrowser = builder.Configuration.GetValue<bool>("Azure:KeyVault:EnableInteractiveBrowserCredential");
-
-    if (keyVaultEnabled && !string.IsNullOrEmpty(keyVaultUri))
+    try
     {
-        try
+        // Build credential chain honoring configuration
+        var defaultOptions = new DefaultAzureCredentialOptions { ExcludeAzurePowerShellCredential = true };
+        var tenantId = builder.Configuration["Azure:AzureAd:TenantId"];
+        var creds = new List<TokenCredential>();
+        if (preferAzureCli) creds.Add(new AzureCliCredential());
+        if (enableInteractiveBrowser)
         {
-            // Build a credential chain that works well locally
-            // Build credential chain honoring configuration
-            var defaultOptions = new DefaultAzureCredentialOptions { ExcludeAzurePowerShellCredential = true };
-            var tenantId = builder.Configuration["Azure:AzureAd:TenantId"];
-            var creds = new List<TokenCredential>();
-            if (preferAzureCli) creds.Add(new AzureCliCredential());
-            if (enableInteractiveBrowser)
+            creds.Add(new InteractiveBrowserCredential(new InteractiveBrowserCredentialOptions
             {
-                creds.Add(new InteractiveBrowserCredential(new InteractiveBrowserCredentialOptions
-                {
-                    TenantId = string.IsNullOrWhiteSpace(tenantId) ? null : tenantId
-                }));
-            }
-            creds.Add(new DefaultAzureCredential(defaultOptions));
-            TokenCredential credential = creds.Count == 1 ? creds[0] : new ChainedTokenCredential(creds.ToArray());
+                TenantId = string.IsNullOrWhiteSpace(tenantId) ? null : tenantId
+            }));
+        }
+        creds.Add(new DefaultAzureCredential(defaultOptions));
+        TokenCredential credential = creds.Count == 1 ? creds[0] : new ChainedTokenCredential(creds.ToArray());
 
-            builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUri), credential);
-            Console.WriteLine($"✅ Connected to Azure Key Vault: {keyVaultUri}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"⚠️ Could not connect to Azure Key Vault: {keyVaultUri} - {ex.Message}");
-        }
+        builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUri), credential);
+        Console.WriteLine($"✅ Connected to Azure Key Vault: {keyVaultUri}");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠️ Could not connect to Azure Key Vault: {keyVaultUri} - {ex.Message}");
     }
 }
 
@@ -78,19 +65,11 @@ builder.Services.AddControllers();
 // Add memory cache for live services
 builder.Services.AddMemoryCache();
 
-// Add custom services - conditionally based on environment
-if (environment == "Live")
-{
-    builder.Services.AddScoped<IEntraIdAuthenticationService, LiveEntraIdAuthenticationService>();
-    builder.Services.AddSingleton<IAzureCommunicationService, LiveAzureCommunicationService>();
-    Console.WriteLine($"🚀 Live Azure Services registered for environment: {environment}");
-}
-else
-{
-    builder.Services.AddScoped<IEntraIdAuthenticationService, EntraIdAuthenticationService>();
-    builder.Services.AddSingleton<IAzureCommunicationService, AzureCommunicationService>();
-    Console.WriteLine($"📋 Demo Services registered for environment: {environment}");
-}
+// Add custom services - using Live services as default
+builder.Services.AddScoped<IEntraIdAuthenticationService, LiveEntraIdAuthenticationService>();
+builder.Services.AddSingleton<IAzureCommunicationService, LiveAzureCommunicationService>();
+builder.Services.AddSingleton<IAcsOperationTracker, AcsOperationTracker>();
+Console.WriteLine("🚀 Live Azure Services registered");
 
 // Add authentication
 var azureAdClientId = builder.Configuration["Azure:AzureAd:ClientId"];
@@ -205,24 +184,17 @@ else
 
 builder.Services.AddAuthorization();
 
-// Enhanced logging for demo purposes
+// Enhanced logging
 builder.Services.AddLogging(logging =>
 {
     logging.ClearProviders();
     logging.AddConsole();
     
-    // More verbose logging for Live environment
-    if (environment == "Live")
-    {
-        logging.SetMinimumLevel(LogLevel.Debug);
-        logging.AddFilter("CrossTenantChat", LogLevel.Information);
-        logging.AddFilter("Microsoft.AspNetCore.Authentication", LogLevel.Information);
-        logging.AddFilter("Azure", LogLevel.Information);
-    }
-    else
-    {
-        logging.SetMinimumLevel(LogLevel.Information);
-    }
+    // Use appropriate logging level
+    logging.SetMinimumLevel(LogLevel.Debug);
+    logging.AddFilter("CrossTenantChat", LogLevel.Information);
+    logging.AddFilter("Microsoft.AspNetCore.Authentication", LogLevel.Information);
+    logging.AddFilter("Azure", LogLevel.Information);
 });
 
 var app = builder.Build();
@@ -230,31 +202,21 @@ var app = builder.Build();
 // Log startup information
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 logger.LogInformation("🎯 Cross-Tenant Chat Application Starting");
-logger.LogInformation("Environment: {Environment}", environment);
 logger.LogInformation("Configuration Sources: {ConfigSources}", 
     string.Join(", ", builder.Configuration.Sources.Select(s => s.GetType().Name)));
 
-if (environment == "Live")
-{
-    logger.LogInformation("🌐 Live Azure Integration Enabled");
-    logger.LogInformation("✅ Real Entra ID Authentication");
-    logger.LogInformation("✅ Live Azure Communication Services");
-    
-    // Log configuration validation
-    var acsConnectionString = builder.Configuration["Azure:AzureCommunicationServices:ConnectionString"];
-    var contosoTenantId = builder.Configuration["Azure:AzureAd:ContosoTenantId"];
-    var fabrikamTenantId = builder.Configuration["Azure:AzureAd:FabrikamTenantId"];
-    
-    logger.LogInformation("ACS Connection: {HasAcsConnection}", !string.IsNullOrEmpty(acsConnectionString) ? "✅ Configured" : "❌ Missing");
-    logger.LogInformation("Contoso Tenant: {ContosoTenant}", !string.IsNullOrEmpty(contosoTenantId) ? "✅ Configured" : "❌ Missing");
-    logger.LogInformation("Fabrikam Tenant: {FabrikamTenant}", !string.IsNullOrEmpty(fabrikamTenantId) ? "✅ Configured" : "❌ Missing");
-}
-else
-{
-    logger.LogInformation("🧪 Demo Mode Enabled");
-    logger.LogInformation("🔄 Simulated Authentication");
-    logger.LogInformation("🔄 In-Memory Chat Storage");
-}
+logger.LogInformation("🌐 Live Azure Integration Enabled");
+logger.LogInformation("✅ Real Entra ID Authentication");
+logger.LogInformation("✅ Live Azure Communication Services");
+
+// Log configuration validation
+var acsConnectionString = builder.Configuration["Azure:AzureCommunicationServices:ConnectionString"];
+var contosoTenantId = builder.Configuration["Azure:AzureAd:ContosoTenantId"];
+var fabrikamTenantId = builder.Configuration["Azure:AzureAd:FabrikamTenantId"];
+
+logger.LogInformation("ACS Connection: {HasAcsConnection}", !string.IsNullOrEmpty(acsConnectionString) ? "✅ Configured" : "❌ Missing");
+logger.LogInformation("Contoso Tenant: {ContosoTenant}", !string.IsNullOrEmpty(contosoTenantId) ? "✅ Configured" : "❌ Missing");
+logger.LogInformation("Fabrikam Tenant: {FabrikamTenant}", !string.IsNullOrEmpty(fabrikamTenantId) ? "✅ Configured" : "❌ Missing");
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -293,9 +255,6 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 logger.LogInformation("🚀 Cross-Tenant Chat Application Started Successfully");
-if (environment == "Live")
-{
-    logger.LogInformation("🌐 Ready for live cross-tenant authentication: Fabrikam ↔ Contoso");
-}
+logger.LogInformation("🌐 Ready for live cross-tenant authentication: Fabrikam ↔ Contoso");
 
 app.Run();

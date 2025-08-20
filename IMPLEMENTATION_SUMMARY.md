@@ -29,8 +29,7 @@ CrossTenantChat/
 │   ├── Home.razor                     # Demo overview page
 │   └── Chat.razor                     # Main chat interface
 ├── Program.cs                         # Service configuration
-├── appsettings.json                   # Development config
-├── appsettings.Production.json        # Production template
+├── appsettings.json                   # Production configuration
 ├── README.md                          # Comprehensive documentation
 ├── setup.ps1                          # Windows setup script
 └── setup.sh                           # Linux/Mac setup script
@@ -144,7 +143,7 @@ Navigate to: `http://localhost:5068/chat`
 ✅ **ACS chat functionality** with real-time messaging  
 ✅ **Visual indicators** for cross-tenant flow  
 ✅ **Comprehensive logging** for monitoring and debugging  
-✅ **Production-ready configuration** templates  
+✅ **Production-ready configuration** integrated  
 ✅ **Setup scripts** for easy deployment  
 
 The project successfully demonstrates the complete cross-tenant chat scenario using Azure Communication Services with Microsoft Entra ID authentication, providing both educational value and a foundation for production implementation.

@@ -1,0 +1,115 @@
+@page "/test-json"
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+@inject ILogger<TestJsonPage> Logger
+
+<div class="container py-4">
+    <h2 class="mb-3">🧪 JSON Element Test</h2>
+    <p class="text-muted">This page tests the JsonElement handling for JavaScript interop.</p>
+
+    @if (!string.IsNullOrEmpty(_statusMessage))
+    {
+        <div class="alert @(_statusMessage.Contains("✅") ? "alert-success" : _statusMessage.Contains("❌") ? "alert-danger" : "alert-info")" role="alert">
+            @_statusMessage
+        </div>
+    }
+
+    <div class="d-flex gap-2 mb-3">
+        <button class="btn btn-primary" @onclick="TestSuccess" disabled="@_testing">Test Success</button>
+        <button class="btn btn-secondary" @onclick="TestFailure" disabled="@_testing">Test Failure</button>
+    </div>
+</div>
+
+@code {
+    private IJSObjectReference? _module;
+    private bool _testing;
+    private string? _statusMessage;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                Logger.LogInformation("Loading test module...");
+                _module = await JS.InvokeAsync<IJSObjectReference>("import", "/js/test-acs-ui.js");
+                Logger.LogInformation("Test module loaded successfully");
+                _statusMessage = "✅ Test module loaded - ready to test JSON handling";
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Failed to load test module");
+                _statusMessage = $"❌ Failed to load module: {ex.Message}";
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task TestSuccess()
+    {
+        if (_module == null) return;
+        
+        try
+        {
+            _testing = true;
+            _statusMessage = "🔍 Testing successful JSON response...";
+            StateHasChanged();
+            
+            var result = await _module.InvokeAsync<System.Text.Json.JsonElement>("testAcsUI.testCheckLibraries");
+            
+            var success = result.TryGetProperty("success", out var successProp) ? successProp.GetBoolean() : false;
+            var message = result.TryGetProperty("message", out var messageProp) ? messageProp.GetString() ?? "" : "No message provided";
+            
+            _statusMessage = $"✅ Success test passed! Success: {success}, Message: {message}";
+            Logger.LogInformation("Success test completed - Success: {Success}, Message: {Message}", success, message);
+        }
+        catch (Exception ex)
+        {
+            _statusMessage = $"❌ Error in success test: {ex.Message}";
+            Logger.LogError(ex, "Failed success test");
+        }
+        finally
+        {
+            _testing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task TestFailure()
+    {
+        if (_module == null) return;
+        
+        try
+        {
+            _testing = true;
+            _statusMessage = "🔍 Testing failure JSON response...";
+            StateHasChanged();
+            
+            var result = await _module.InvokeAsync<System.Text.Json.JsonElement>("testAcsUI.testCheckLibrariesFail");
+            
+            var success = result.TryGetProperty("success", out var successProp) ? successProp.GetBoolean() : false;
+            var message = result.TryGetProperty("message", out var messageProp) ? messageProp.GetString() ?? "" : "No message provided";
+            
+            _statusMessage = $"✅ Failure test passed! Success: {success}, Message: {message}";
+            Logger.LogInformation("Failure test completed - Success: {Success}, Message: {Message}", success, message);
+        }
+        catch (Exception ex)
+        {
+            _statusMessage = $"❌ Error in failure test: {ex.Message}";
+            Logger.LogError(ex, "Failed failure test");
+        }
+        finally
+        {
+            _testing = false;
+            StateHasChanged();
+        }
+    }
+}
+
+@code {
+    public class TestJsonPage
+    {
+        // Empty class just for the logger generic type
+    }
+}

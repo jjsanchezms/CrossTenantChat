@@ -105,7 +105,8 @@
             </div>
 
             <!-- Chat Area -->
-            <div class="col-md-9">
+            <div class="col-md-9 d-flex flex-column">
+                <div class="flex-grow-1 mb-3">
                 @if (!string.IsNullOrEmpty(selectedThreadId))
                 {
                     <div class="card h-100">
@@ -117,9 +118,17 @@
                                 }
                                 @selectedThread?.Topic
                             </h5>
-                            <button class="btn btn-outline-secondary btn-sm" @onclick="RefreshMessages">
-                                🔄 Refresh
-                            </button>
+                            <div>
+                                <button class="btn btn-outline-secondary btn-sm" @onclick="RefreshMessages">
+                                    🔄 Refresh
+                                </button>
+                                @if (IsLive)
+                                {
+                                    <button class="btn btn-outline-info btn-sm ms-1" @onclick="SendTestMessage" disabled="@isSendingMessage">
+                                        🧪 Test ACS
+                                    </button>
+                                }
+                            </div>
                         </div>
                         <div class="card-body d-flex flex-column" style="height: 500px;">
                             <!-- Messages -->
@@ -186,9 +195,12 @@
                         </div>
                     </div>
                 }
+                </div>
 
-                <!-- ACS Debug Panel placed below the chat area (right column bottom) as footer-style -->
-                <AcsDebugPanel User="currentUser" Thread="selectedThread" InitiallyCollapsed="true" Inline="true" FooterStyle="true" />
+                <!-- ACS Debug Panel as separate section outside the chat card -->
+                <div class="flex-shrink-0">
+                    <AcsDebugPanelEnhanced User="currentUser" Thread="selectedThread" InitiallyCollapsed="true" Inline="true" FooterStyle="false" />
+                </div>
             </div>
         </div>
     }
@@ -250,6 +262,8 @@
 
     private string newMessage = "";
     private bool isSendingMessage = false;
+
+    private bool IsLive => AcsService?.GetType().Name?.Contains("Live", StringComparison.OrdinalIgnoreCase) == true;
 
     private bool showNewThreadModal = false;
     private string newThreadTopic = "";
@@ -546,6 +560,31 @@
     {
         // Submitting the form (e.g., pressing Enter) should send the message
         await SendMessage();
+    }
+
+    private async Task SendTestMessage()
+    {
+        if (currentUser == null || string.IsNullOrEmpty(selectedThreadId))
+            return;
+
+        var testMessage = $"🧪 ACS Test Message - {DateTime.Now:HH:mm:ss}";
+        isSendingMessage = true;
+        StateHasChanged();
+
+        try
+        {
+            Logger.LogInformation("Sending test ACS message to demonstrate operation tracking");
+            var success = await AcsService.SendMessageAsync(selectedThreadId, testMessage, currentUser);
+            if (success)
+            {
+                await RefreshMessages();
+            }
+        }
+        finally
+        {
+            isSendingMessage = false;
+            StateHasChanged();
+        }
     }
 
     private void ShowNewThreadModal()
