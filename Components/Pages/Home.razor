@@ -2,7 +2,7 @@
 @using Microsoft.AspNetCore.Authorization
 @attribute [AllowAnonymous]
 
-<!-- Fluent UI Enhanced Home Page -->
+<!-- Simplified Fluent UI Home Page -->
 <div class="fluent-home-container">
     <!-- Hero Section -->
     <section class="fluent-hero-section">
@@ -28,102 +28,6 @@
                         <path d="M16 8c0 3.866-3.582 7-8 7a9.06 9.06 0 0 1-2.347-.306c-.584.296-1.925.864-4.181 1.234-.2.032-.352-.176-.273-.362.354-.836.674-1.95.77-2.966C.744 11.37 0 9.76 0 8c0-3.866 3.582-7 8-7s8 3.134 8 7z"/>
                     </svg>
                     Start Chatting
-                </a>
-                <a href="/fluent-demo" class="fluent-button fluent-button-secondary fluent-button-large">
-                    <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                        <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 0 1-1 0v-1h-1a.5.5 0 0 1 0-1h1v-1a.5.5 0 0 1 1 0Zm-2-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
-                        <path d="M2 13c0 1 1 1 1 1h5.256A4.493 4.493 0 0 1 8 12.5a4.49 4.49 0 0 1 1.544-3.393C9.077 9.038 8.564 9 8 9c-5 0-6 3-6 4Z"/>
-                    </svg>
-                    View Demo
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features Section -->
-    <section class="fluent-features-section">
-        <div class="fluent-features-header">
-            <h2 class="fluent-title-2">Enterprise-Grade Features</h2>
-            <p class="fluent-body-1">Built with Microsoft's proven technologies for secure, scalable communication</p>
-        </div>
-        
-        <div class="fluent-features-grid">
-            <!-- Security Feature -->
-            <div class="fluent-feature-card">
-                <div class="fluent-feature-icon">
-                    <svg width="32" height="32" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                        <path d="M5.338 1.59a61.44 61.44 0 0 0-2.837.856.481.481 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.725 10.725 0 0 0 2.287 2.233c.346.244.652.42.893.533.12.057.218.095.293.118a.55.55 0 0 0 .101.025.615.615 0 0 0 .1-.025c.076-.023.174-.061.294-.118.24-.113.547-.29.893-.533a10.726 10.726 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.775 11.775 0 0 1-2.517 2.453 7.159 7.159 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7.158 7.158 0 0 1-1.048-.625 11.777 11.777 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 62.456 62.456 0 0 1 5.072.56z"/>
-                        <path d="M10.854 5.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 7.793l2.646-2.647a.5.5 0 0 1 .708 0z"/>
-                    </svg>
-                </div>
-                <h3 class="fluent-feature-title">Enterprise Security</h3>
-                <p class="fluent-feature-description">
-                    End-to-end encryption with Azure Active Directory integration. Comply with enterprise security requirements and data governance policies.
-                </p>
-                <div class="fluent-feature-tags">
-                    <span class="fluent-tag fluent-tag-success">SSO Ready</span>
-                    <span class="fluent-tag fluent-tag-info">GDPR Compliant</span>
-                </div>
-            </div>
-
-            <!-- Scalability Feature -->
-            <div class="fluent-feature-card">
-                <div class="fluent-feature-icon">
-                    <svg width="32" height="32" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                        <path d="M4.406 3.342A5.53 5.53 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773 16 11.636 14.502 13 12.687 13H3.781C1.708 13 0 11.366 0 9.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-1.383zm.653.757c-.757.653-1.153 1.44-1.153 2.056v.448l-.445.049C2.064 6.805 1 7.952 1 9.318 1 10.785 2.23 12 3.781 12h8.906C13.98 12 15 10.988 15 9.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 4.825 10.328 3 8 3a4.53 4.53 0 0 0-2.941 1.1z"/>
-                    </svg>
-                </div>
-                <h3 class="fluent-feature-title">Cloud-Native Scale</h3>
-                <p class="fluent-feature-description">
-                    Powered by Azure Communication Services for global reach and automatic scaling. Handle thousands of concurrent users with 99.9% uptime SLA.
-                </p>
-                <div class="fluent-feature-tags">
-                    <span class="fluent-tag fluent-tag-brand">Global</span>
-                    <span class="fluent-tag fluent-tag-success">99.9% SLA</span>
-                </div>
-            </div>
-
-            <!-- Integration Feature -->
-            <div class="fluent-feature-card">
-                <div class="fluent-feature-icon">
-                    <svg width="32" height="32" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                        <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
-                    </svg>
-                </div>
-                <h3 class="fluent-feature-title">Easy Integration</h3>
-                <p class="fluent-feature-description">
-                    RESTful APIs and SDKs for seamless integration into your existing applications. Support for multiple programming languages and frameworks.
-                </p>
-                <div class="fluent-feature-tags">
-                    <span class="fluent-tag fluent-tag-neutral">REST API</span>
-                    <span class="fluent-tag fluent-tag-neutral">Multi-Platform</span>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Getting Started Section -->
-    <section class="fluent-getting-started">
-        <div class="fluent-getting-started-content">
-            <h2 class="fluent-title-2">Ready to Get Started?</h2>
-            <p class="fluent-body-1">
-                Explore our live demo or start implementing cross-tenant chat in your organization today.
-            </p>
-            <div class="fluent-getting-started-actions">
-                <a href="/login" class="fluent-button fluent-button-primary fluent-button-large">
-                    <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                        <path fill-rule="evenodd" d="M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0v-2z"/>
-                        <path fill-rule="evenodd" d="M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
-                    </svg>
-                    Get Started
-                </a>
-                <a href="https://learn.microsoft.com/aspnet/core/" target="_blank" class="fluent-button fluent-button-subtle fluent-button-large">
-                    <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                        <path d="M8.05 9.6c.336 0 .504-.24.554-.627.04-.534.198-.815.847-1.26.673-.475 1.049-1.09 1.049-1.986 0-1.325-.92-2.227-2.262-2.227-1.02 0-1.792.492-2.1 1.29A1.71 1.71 0 0 0 6 5.48c0 .393.203.64.545.64.272 0 .455-.147.564-.51.158-.592.525-.915 1.074-.915.61 0 1.03.446 1.03 1.084 0 .563-.208.885-.822 1.325-.619.433-.926.914-.926 1.64v.111c0 .428.208.745.585.745z"/>
-                        <path d="m10.273 2.513-.921-.944.715-.698.622.637.89-.011a2.89 2.89 0 0 1 2.924 2.924l-.01.89.636.622a2.89 2.89 0 0 1 0 4.134l-.637.622.011.89a2.89 2.89 0 0 1-2.924 2.924l-.89-.01-.622.636a2.89 2.89 0 0 1-4.134 0l-.622-.637-.89.011a2.89 2.89 0 0 1-2.924-2.924l.01-.89-.636-.622a2.89 2.89 0 0 1 0-4.134l.637-.622-.011-.89a2.89 2.89 0 0 1 2.924-2.924l.89.01.622-.636a2.89 2.89 0 0 1 4.134 0l-.715.698a1.89 1.89 0 0 0-2.704 0l-.92.944-1.32-.016a1.89 1.89 0 0 0-1.911 1.912l.016 1.318-.944.921a1.89 1.89 0 0 0 0 2.704l.944.92-.016 1.32a1.89 1.89 0 0 0 1.912 1.911l1.318-.016.921.944a1.89 1.89 0 0 0 2.704 0l.92-.944 1.32.016a1.89 1.89 0 0 0 1.911-1.912l-.016-1.318.944-.921a1.89 1.89 0 0 0 0-2.704l-.944-.92.016-1.32a1.89 1.89 0 0 0-1.912-1.911l-1.318.016z"/>
-                        <path d="M7.001 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0z"/>
-                    </svg>
-                    Documentation
                 </a>
             </div>
         </div>
