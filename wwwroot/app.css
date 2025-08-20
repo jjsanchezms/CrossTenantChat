@@ -290,6 +290,9 @@ body{
   transition: transform .06s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease;
   will-change: transform;
   font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text);
 }
 .fluent-button svg{ flex: 0 0 auto; }
 
@@ -307,7 +310,25 @@ body{
   transform: translateY(0);
 }
 
+.fluent-button-subtle{
+  background: rgba(255,255,255,.04);
+  border-color: rgba(255,255,255,.08);
+  color: var(--muted);
+}
+.fluent-button-subtle:hover{
+  background: rgba(255,255,255,.08);
+  border-color: rgba(255,255,255,.12);
+  color: var(--text);
+}
+
 .fluent-button-large{ padding: .85rem 1.2rem; font-size: 1rem; }
+.fluent-button-small{ padding: .4rem .6rem; font-size: .875rem; }
+
+.fluent-button:disabled{
+  opacity: .5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
 
 /* Focus visibility */
 .fluent-button:focus-visible,
@@ -346,7 +367,239 @@ a.fluent-nav-link:focus-visible{
 }
 
 /* -----------------------
-   8) Utility tweaks
+   8) Login Page & Components
+----------------------- */
+.fluent-login-container{
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: var(--space-4);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fluent-login-content{
+  width: 100%;
+  max-width: 800px;
+}
+
+.fluent-login-card{
+  background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.fluent-login-header{
+  padding: var(--space-6);
+  text-align: center;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+.fluent-login-icon{
+  width: 80px;
+  height: 80px;
+  margin: 0 auto var(--space-3);
+  display: grid;
+  place-items: center;
+  background: radial-gradient(80% 80% at 50% 20%, rgba(91,140,255,.32), rgba(91,140,255,.08));
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 24px;
+  color: var(--brand);
+}
+
+.fluent-login-title{
+  margin: 0 0 var(--space-2) 0;
+  font-size: 1.75rem;
+  color: var(--text);
+}
+
+.fluent-login-subtitle{
+  margin: 0;
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.fluent-login-body{
+  padding: var(--space-6);
+}
+
+.fluent-tenant-selection-title{
+  margin: 0 0 var(--space-4) 0;
+  font-size: 1.25rem;
+  color: var(--text);
+}
+
+.fluent-tenant-grid{
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  margin-bottom: var(--space-6);
+}
+
+.fluent-tenant-card{
+  background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: var(--radius-sm);
+  padding: var(--space-4);
+  transition: all .2s ease;
+}
+
+.fluent-tenant-card:hover{
+  border-color: rgba(255,255,255,.12);
+  background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+}
+
+.fluent-tenant-header{
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.fluent-tenant-icon{
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-xs);
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  border: 1px solid rgba(255,255,255,.08);
+}
+
+.fluent-tenant-details{
+  flex: 1;
+}
+
+.fluent-tenant-title{
+  margin: 0 0 .25rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.fluent-tenant-description{
+  margin: 0;
+  font-size: .875rem;
+  color: var(--muted);
+}
+
+.fluent-tenant-badge{
+  padding: .25rem .5rem;
+  border-radius: var(--radius-xs);
+  font-size: .75rem;
+  font-weight: 600;
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.fluent-tenant-actions{
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.fluent-messagebar{
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-4);
+}
+
+.fluent-messagebar-info{
+  background: rgba(91,140,255,.1);
+  border: 1px solid rgba(91,140,255,.2);
+  color: var(--text);
+}
+
+.fluent-info-card{
+  background: rgba(96,225,203,.08);
+  border: 1px solid rgba(96,225,203,.2);
+  border-radius: var(--radius-sm);
+  padding: var(--space-4);
+}
+
+.fluent-info-header{
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.fluent-info-content p{
+  margin: 0 0 var(--space-2) 0;
+  color: var(--text);
+  font-size: .875rem;
+}
+
+.fluent-info-note{
+  color: var(--muted);
+  font-style: italic;
+}
+
+.fluent-debug-card{
+  margin-top: var(--space-4);
+  background: var(--surface-2);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: var(--radius-sm);
+}
+
+.fluent-debug-header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+.fluent-debug-title{
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.fluent-debug-body{
+  padding: var(--space-3);
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.fluent-debug-message{
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+  font-family: monospace;
+  font-size: .75rem;
+}
+
+.fluent-debug-timestamp{
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.fluent-debug-text{
+  color: var(--text);
+}
+
+.fluent-spinner{
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin{
+  from{ transform: rotate(0deg); }
+  to{ transform: rotate(360deg); }
+}
+
+/* -----------------------
+   9) Utility tweaks
 ----------------------- */
 ::selection{ background: rgba(91,140,255,.35); color: #fff; }
 img, svg{ display:block; }
