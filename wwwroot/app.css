@@ -338,33 +338,14 @@ a.fluent-nav-link:focus-visible{
 }
 
 /* -----------------------
-   7) Error UI
------------------------ */
-.fluent-error-boundary{
-  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
-  display: grid; grid-template-columns: 28px 1fr auto; gap: .75rem; align-items:center;
-  background: linear-gradient(180deg, #271015, #1a0b0f);
-  color: #ffd7df;
-  border: 1px solid rgba(255,0,82,.25);
-  border-radius: var(--radius);
-  padding: .75rem .9rem;
-  box-shadow: var(--shadow);
-  max-width: min(92vw, 720px);
-}
-.fluent-error-icon svg{ color:#ff6b8a; }
-.fluent-error-actions .fluent-button-primary{
-  background: linear-gradient(180deg, #ff6b8a, #f23d63);
-  border-color: rgba(255,107,138,.5);
-  box-shadow: 0 8px 20px rgba(242,61,99,.35), inset 0 1px 0 rgba(255,255,255,.25);
-}
-.fluent-error-dismiss{
-  appearance: none;
-  background: transparent;
-  border: 1px solid rgba(255,255,255,.15);
-  color: inherit;
-  border-radius: 10px;
-  padding: .4rem .5rem;
-}
+  7) Error UI (scoped in MainLayout.razor.css)
+  NOTE: Global styles removed to avoid forcing the banner visible by default.
+  The component-scoped CSS controls visibility (hidden by default) and layout.
+------------------------ */
+
+/* Fallback: ensure Blazor error UI is hidden by default */
+#blazor-error-ui { display: none; }
+#blazor-error-ui.show { display: block; }
 
 /* -----------------------
    8) Login Page & Components

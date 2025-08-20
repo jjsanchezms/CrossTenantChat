@@ -1,0 +1,15 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run CrossTenantChat (Live no-profile)",
+			"type": "shell",
+			"command": "$env:ASPNETCORE_ENVIRONMENT=\"Live\"; dotnet run --project CrossTenantChat.csproj --no-launch-profile",
+			"isBackground": false,
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build"
+		}
+	]
+}

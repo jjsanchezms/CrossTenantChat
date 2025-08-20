@@ -64,7 +64,6 @@ C:\acsworkspace\AzureCommunication\CrossTenantChat\obj\Debug\net9.0\scopedcss\Co
 C:\acsworkspace\AzureCommunication\CrossTenantChat\obj\Debug\net9.0\scopedcss\Components\Pages\Login.razor.rz.scp.css
 C:\acsworkspace\AzureCommunication\CrossTenantChat\obj\Debug\net9.0\scopedcss\bundle\CrossTenantChat.styles.css
 C:\acsworkspace\AzureCommunication\CrossTenantChat\obj\Debug\net9.0\scopedcss\projectbundle\CrossTenantChat.bundle.scp.css
-C:\acsworkspace\AzureCommunication\CrossTenantChat\obj\Debug\net9.0\compressed\eme0az64a5-mlxxlwg8q1.gz
 C:\acsworkspace\AzureCommunication\CrossTenantChat\obj\Debug\net9.0\compressed\t84z4pg6or-bqjiyaj88i.gz
 C:\acsworkspace\AzureCommunication\CrossTenantChat\obj\Debug\net9.0\compressed\a08eg0c3tb-c2jlpeoesf.gz
 C:\acsworkspace\AzureCommunication\CrossTenantChat\obj\Debug\net9.0\compressed\gpu1uk98lm-erw9l3u2r3.gz
@@ -121,3 +120,4 @@ C:\acsworkspace\AzureCommunication\CrossTenantChat\obj\Debug\net9.0\refint\Cross
 C:\acsworkspace\AzureCommunication\CrossTenantChat\obj\Debug\net9.0\CrossTenantChat.pdb
 C:\acsworkspace\AzureCommunication\CrossTenantChat\obj\Debug\net9.0\CrossTenantChat.genruntimeconfig.cache
 C:\acsworkspace\AzureCommunication\CrossTenantChat\obj\Debug\net9.0\ref\CrossTenantChat.dll
+C:\acsworkspace\AzureCommunication\CrossTenantChat\obj\Debug\net9.0\compressed\eme0az64a5-eds7j8znyb.gz
