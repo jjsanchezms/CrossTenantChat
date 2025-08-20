@@ -155,21 +155,23 @@
                                 }
                             </div>
 
-                            <!-- Message Input -->
-                            <div class="input-group">
-                                <input type="text" class="form-control" @bind="newMessage" @onkeypress="HandleKeyPress" 
-                                       placeholder="Type your message..." disabled="@isSendingMessage">
-                                <button class="btn btn-primary" @onclick="SendMessage" disabled="@(isSendingMessage || string.IsNullOrEmpty(newMessage))">
-                                    @if (isSendingMessage)
-                                    {
-                                        <span class="spinner-border spinner-border-sm"></span>
-                                    }
-                                    else
-                                    {
-                                        <span>📤 Send</span>
-                                    }
-                                </button>
-                            </div>
+                            <!-- Message Input: submit on Enter -->
+                            <form @onsubmit="OnSubmitSend" @onsubmit:preventDefault="true">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" @bind="newMessage"
+                                           placeholder="Type your message..." disabled="@isSendingMessage">
+                                    <button type="submit" class="btn btn-primary" disabled="@(isSendingMessage || string.IsNullOrEmpty(newMessage))">
+                                        @if (isSendingMessage)
+                                        {
+                                            <span class="spinner-border spinner-border-sm"></span>
+                                        }
+                                        else
+                                        {
+                                            <span>📤 Send</span>
+                                        }
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 }
@@ -263,6 +265,7 @@
     private CancellationTokenSource? _refreshCts;
     private Task? _refreshTask;
     private bool _isRefreshing;
+    private bool _isRefreshingThreads;
 
     protected override async Task OnInitializedAsync()
     {
@@ -459,10 +462,32 @@
 
     private async Task RefreshUserThreads()
     {
-        if (currentUser != null)
+        if (currentUser == null) return;
+
+        if (_isRefreshingThreads) return;
+        _isRefreshingThreads = true;
+        try
         {
-            userThreads = await AcsService.GetUserChatThreadsAsync(currentUser);
+            var threads = await AcsService.GetUserChatThreadsAsync(currentUser);
+            userThreads = threads;
+
+            // Keep selectedThread reference fresh if it's still present
+            if (!string.IsNullOrEmpty(selectedThreadId))
+            {
+                selectedThread = userThreads.FirstOrDefault(t => t.Id == selectedThreadId);
+                // If the selected thread disappeared, clear selection
+                if (selectedThread == null)
+                {
+                    selectedThreadId = string.Empty;
+                    currentMessages.Clear();
+                }
+            }
+
             StateHasChanged();
+        }
+        finally
+        {
+            _isRefreshingThreads = false;
         }
     }
 
@@ -517,12 +542,10 @@
         }
     }
 
-    private async Task HandleKeyPress(KeyboardEventArgs e)
+    private async Task OnSubmitSend()
     {
-        if (e.Key == "Enter" && !string.IsNullOrEmpty(newMessage))
-        {
-            await SendMessage();
-        }
+        // Submitting the form (e.g., pressing Enter) should send the message
+        await SendMessage();
     }
 
     private void ShowNewThreadModal()
@@ -597,6 +620,13 @@
                 {
                     try
                     {
+                        // Always check for newly created threads
+                        if (AutoRefreshEnabled)
+                        {
+                            await InvokeAsync(RefreshUserThreads);
+                        }
+
+                        // Then refresh messages for the selected thread, if any
                         if (!string.IsNullOrEmpty(selectedThreadId) && AutoRefreshEnabled)
                         {
                             await InvokeAsync(RefreshMessages);
