@@ -1,3 +1,16 @@
+## Auto-added Participants
+
+To make the demo instantly collaborative, every newly created thread includes these participants by email:
+
+ - `contoso@juanjosesshotmail.onmicrosoft.com` (Contoso)
+ - `fabrikam@juanjosesanchezsanchezoutlo.onmicrosoft.com` (Fabrikam)
+
+Threads store these as placeholder entries (ID is `email:<address>`). When a user logs in, if their email matches a placeholder, we bind that participant to the real user ID and add the thread to their membership map automatically. This ensures the other user can see and join the thread(s) without manual invites.
+
+Notes:
+ - This behavior is implemented in both `Services/AzureCommunicationService.cs` (demo) and `Services/LiveAzureCommunicationService.cs` (live).
+ - For production, replace this with explicit invites and proper persistence.
+
 # Cross-Tenant Chat Demo with Azure Communication Services
 
 This project demonstrates cross-tenant chat using Azure Communication Services (ACS) with Microsoft Entra ID authentication. It showcases how a user from one Azure tenant (Fabrikam) can authenticate and access Azure Communication Services resources hosted in another tenant (Contoso).
@@ -42,6 +55,8 @@ git clone <repository-url>
 cd CrossTenantChat
 dotnet restore
 dotnet run
+- Auto-added participants: new threads include two demo users by email so either side sees/join threads on login
+
 ```
 
 Navigate to `https://localhost:5068` and explore the simulated cross-tenant flow.

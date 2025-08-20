@@ -2,6 +2,7 @@ using Azure.Communication.Identity;
 using CrossTenantChat.Configuration;
 using CrossTenantChat.Models;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CrossTenantChat.Services
 {
@@ -9,7 +10,9 @@ namespace CrossTenantChat.Services
     {
         Task<TokenExchangeResult> ExchangeEntraIdTokenForAcsTokenAsync(ChatUser user);
         Task<(string Token, string UserId)> GetCommunicationUserTokenAsync(string userId);
-        Task<ChatThread> CreateChatThreadAsync(string topic, string[] userIds);
+    Task<ChatThread> CreateChatThreadAsync(string topic, string[] userIds);
+    // Returns a cached or existing chat thread for the user if available; does not create new threads.
+    Task<ChatThread?> GetOrCreateUserThreadAsync(ChatUser user, string? defaultTopic = null);
         Task<bool> AddParticipantToChatAsync(string threadId, ChatUser participant);
         Task<bool> SendMessageAsync(string threadId, string message, ChatUser sender);
         Task<List<Models.ChatMessage>> GetMessagesAsync(string threadId);
@@ -21,18 +24,25 @@ namespace CrossTenantChat.Services
         private readonly AzureConfiguration _azureConfig;
         private readonly ILogger<AzureCommunicationService> _logger;
         private readonly CommunicationIdentityClient? _identityClient;
+    private readonly IMemoryCache _memoryCache;
         
         // In-memory storage for demo purposes
         private readonly Dictionary<string, ChatThread> _chatThreads;
         private readonly Dictionary<string, List<Models.ChatMessage>> _threadMessages;
         private readonly Dictionary<string, List<string>> _userThreads;
 
+    // Demo: auto-add these participants to any newly created thread
+    private static readonly string ContosoAutoEmail = "contoso@juanjosesshotmail.onmicrosoft.com";
+    private static readonly string FabrikamAutoEmail = "fabrikam@juanjosesanchezsanchezoutlo.onmicrosoft.com";
+
         public AzureCommunicationService(
             IOptions<AzureConfiguration> azureConfig,
-            ILogger<AzureCommunicationService> logger)
+            ILogger<AzureCommunicationService> logger,
+            IMemoryCache memoryCache)
         {
             _azureConfig = azureConfig.Value;
             _logger = logger;
+            _memoryCache = memoryCache;
             _chatThreads = new Dictionary<string, ChatThread>();
             _threadMessages = new Dictionary<string, List<Models.ChatMessage>>();
             _userThreads = new Dictionary<string, List<string>>();
@@ -154,6 +164,8 @@ namespace CrossTenantChat.Services
             try
             {
                 _logger.LogInformation("💬 Creating chat thread: '{Topic}' with {UserCount} users", topic, userIds.Length);
+                // Always create a brand-new thread when explicitly requested via the UI.
+                // Cached thread reuse is handled elsewhere via GetOrCreateUserThreadAsync.
 
                 var threadId = $"thread_{Guid.NewGuid():N}";
                 var chatThread = new ChatThread
@@ -168,6 +180,12 @@ namespace CrossTenantChat.Services
 
                 _chatThreads[threadId] = chatThread;
                 _threadMessages[threadId] = new List<Models.ChatMessage>();
+
+                // Auto-add well-known demo participants by email so the other user sees/joins later
+                foreach (var p in GetDefaultParticipants())
+                {
+                    TryAddParticipantInternal(chatThread, p);
+                }
                 
                 // Track user threads for all users
                 foreach (var userId in userIds)
@@ -177,6 +195,13 @@ namespace CrossTenantChat.Services
                         _userThreads[userId] = new List<string>();
                     }
                     _userThreads[userId].Add(threadId);
+                }
+
+                // Store in cache for quick reuse on reconnects (expires after 2 hours)
+                if (!string.IsNullOrEmpty(userIds.FirstOrDefault()))
+                {
+                    var cacheKey = $"chat_thread_user:{userIds.First()}";
+                    _memoryCache.Set(cacheKey, chatThread, TimeSpan.FromHours(2));
                 }
 
                 _logger.LogInformation("✅ Chat thread created: {ThreadId}", threadId);
@@ -201,6 +226,32 @@ namespace CrossTenantChat.Services
             {
                 _logger.LogInformation("💬 Creating chat thread: '{Topic}' by {UserName}", topic, creator.Name);
 
+                // Check for an existing cached thread for this user and reuse if present
+                var cacheKey = $"chat_thread_user:{creator.Id}";
+                if (_memoryCache.TryGetValue(cacheKey, out ChatThread? cachedThread) && cachedThread != null)
+                {
+                    if (!_chatThreads.ContainsKey(cachedThread.Id))
+                    {
+                        _chatThreads[cachedThread.Id] = cachedThread;
+                        if (!_threadMessages.ContainsKey(cachedThread.Id))
+                        {
+                            _threadMessages[cachedThread.Id] = new List<Models.ChatMessage>();
+                        }
+                    }
+
+                    if (!_userThreads.ContainsKey(creator.Id))
+                    {
+                        _userThreads[creator.Id] = new List<string>();
+                    }
+                    if (!_userThreads[creator.Id].Contains(cachedThread.Id))
+                    {
+                        _userThreads[creator.Id].Add(cachedThread.Id);
+                    }
+
+                    _logger.LogInformation("🔁 Reusing cached chat thread for user {UserId}: {ThreadId}", creator.Id, cachedThread.Id);
+                    return cachedThread;
+                }
+
                 var threadId = $"thread_{Guid.NewGuid():N}";
                 var chatThread = new ChatThread
                 {
@@ -214,6 +265,12 @@ namespace CrossTenantChat.Services
 
                 _chatThreads[threadId] = chatThread;
                 _threadMessages[threadId] = new List<Models.ChatMessage>();
+
+                // Auto-add the counterpart demo participants, excluding the creator's email if it matches
+                foreach (var p in GetDefaultParticipants().Where(p => !string.Equals(p.Email, creator.Email, StringComparison.OrdinalIgnoreCase)))
+                {
+                    TryAddParticipantInternal(chatThread, p);
+                }
                 
                 // Track user threads
                 if (!_userThreads.ContainsKey(creator.Id))
@@ -238,6 +295,9 @@ namespace CrossTenantChat.Services
 
                 await Task.Delay(50); // Small delay for demo effect
 
+                // Cache for reuse on reconnects
+                _memoryCache.Set(cacheKey, chatThread, TimeSpan.FromHours(2));
+
                 return chatThread;
             }
             catch (Exception ex)
@@ -245,6 +305,53 @@ namespace CrossTenantChat.Services
                 _logger.LogError(ex, "❌ Error creating chat thread: {Topic}", topic);
                 throw;
             }
+        }
+
+    // Returns a cached or existing chat thread for the user if available; does not create new threads.
+    public async Task<ChatThread?> GetOrCreateUserThreadAsync(ChatUser user, string? defaultTopic = null)
+        {
+            // Try cache first
+            var cacheKey = $"chat_thread_user:{user.Id}";
+            if (_memoryCache.TryGetValue(cacheKey, out ChatThread? cachedThread) && cachedThread != null)
+            {
+                // Ensure local dictionaries are populated (service lifetime is scoped)
+                if (!_chatThreads.ContainsKey(cachedThread.Id))
+                {
+                    _chatThreads[cachedThread.Id] = cachedThread;
+                    if (!_threadMessages.ContainsKey(cachedThread.Id))
+                    {
+                        _threadMessages[cachedThread.Id] = new List<Models.ChatMessage>();
+                    }
+                }
+                if (!_userThreads.ContainsKey(user.Id))
+                {
+                    _userThreads[user.Id] = new List<string>();
+                }
+                if (!_userThreads[user.Id].Contains(cachedThread.Id))
+                {
+                    _userThreads[user.Id].Add(cachedThread.Id);
+                }
+
+                _logger.LogInformation("🔁 Reusing cached chat thread for user {UserId}: {ThreadId}", user.Id, cachedThread.Id);
+                return cachedThread;
+            }
+
+            // If no cache, check existing in-memory threads for this user
+            if (_userThreads.TryGetValue(user.Id, out var threadIds))
+            {
+                var existingId = threadIds.FirstOrDefault(id => _chatThreads.ContainsKey(id));
+                if (!string.IsNullOrEmpty(existingId))
+                {
+                    var existing = _chatThreads[existingId];
+                    _memoryCache.Set(cacheKey, existing, TimeSpan.FromHours(2));
+            _logger.LogInformation("📦 Cached existing thread {ThreadId} for user {UserId}", existing.Id, user.Id);
+            return existing;
+                }
+            }
+
+        // Do not auto-create a thread; require explicit user action to create one
+        _logger.LogInformation("ℹ️ No existing thread found for user {UserId}; user must create a new thread", user.Id);
+        return null;
         }
 
         public async Task<bool> AddParticipantToChatAsync(string threadId, ChatUser participant)
@@ -369,22 +476,15 @@ namespace CrossTenantChat.Services
         {
             try
             {
-                var userThreads = new List<ChatThread>();
+                // Ensure any placeholder participant with matching email is bound to this user's real ID/membership
+                EnsureMembershipForUserByEmail(user);
 
-                if (_userThreads.ContainsKey(user.Id))
-                {
-                    var threadIds = _userThreads[user.Id];
-                    foreach (var threadId in threadIds)
-                    {
-                        if (_chatThreads.ContainsKey(threadId))
-                        {
-                            userThreads.Add(_chatThreads[threadId]);
-                        }
-                    }
-                }
-
+                // Demo UX optimization:
+                // Show all existing threads regardless of creator or participant membership.
+                // This makes the demo flow simple: any user can see/select current threads without explicit invites.
+                var allThreads = _chatThreads.Values.OrderByDescending(t => t.CreatedOn).ToList();
                 await Task.Delay(10); // Small delay for demo effect
-                return userThreads.OrderByDescending(t => t.CreatedOn).ToList();
+                return allThreads;
             }
             catch (Exception ex)
             {
@@ -425,6 +525,88 @@ namespace CrossTenantChat.Services
             {
                 _logger.LogError(ex, "❌ Error sending system message");
                 return false;
+            }
+        }
+
+        // --- Helpers: auto-participants and membership reconciliation ---
+        private IEnumerable<ChatUser> GetDefaultParticipants()
+        {
+            // Use placeholder IDs based on email; bind to real user on login via EnsureMembershipForUserByEmail
+            yield return new ChatUser
+            {
+                Id = $"email:{ContosoAutoEmail}",
+                Name = "Contoso User",
+                Email = ContosoAutoEmail,
+                TenantName = "Contoso",
+                IsFromFabrikam = false,
+                TenantId = ""
+            };
+            yield return new ChatUser
+            {
+                Id = $"email:{FabrikamAutoEmail}",
+                Name = "Fabrikam User",
+                Email = FabrikamAutoEmail,
+                TenantName = "Fabrikam",
+                IsFromFabrikam = true,
+                TenantId = ""
+            };
+        }
+
+        private void TryAddParticipantInternal(ChatThread thread, ChatUser participant)
+        {
+            // Avoid duplicates by email
+            if (thread.Participants.Any(u => u.Email.Equals(participant.Email, StringComparison.OrdinalIgnoreCase)))
+                return;
+
+            thread.Participants.Add(participant);
+
+            // Don't register placeholder IDs in membership map to avoid confusion; visible list already shows all threads
+            // If needed, we could track email-based mapping here as well.
+
+            // Mark cross-tenant when a Fabrikam user is present
+            if (participant.IsFromFabrikam)
+            {
+                thread.IsCrossTenant = true;
+            }
+        }
+
+        private void EnsureMembershipForUserByEmail(ChatUser user)
+        {
+            if (string.IsNullOrEmpty(user.Email)) return;
+
+            foreach (var thread in _chatThreads.Values)
+            {
+                var placeholder = thread.Participants.FirstOrDefault(p =>
+                    !string.IsNullOrEmpty(p.Email) &&
+                    p.Email.Equals(user.Email, StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals(p.Id, user.Id, StringComparison.Ordinal));
+
+                if (placeholder != null)
+                {
+                    // Update participant to reflect real logged-in user identity
+                    placeholder.Id = user.Id;
+                    placeholder.Name = string.IsNullOrWhiteSpace(user.Name) ? placeholder.Name : user.Name;
+                    placeholder.TenantName = user.TenantName;
+                    placeholder.TenantId = user.TenantId;
+                    placeholder.IsFromFabrikam = user.IsFromFabrikam;
+                    placeholder.AcsUserId = user.AcsUserId;
+
+                    // Track membership
+                    if (!_userThreads.ContainsKey(user.Id))
+                    {
+                        _userThreads[user.Id] = new List<string>();
+                    }
+                    if (!_userThreads[user.Id].Contains(thread.Id))
+                    {
+                        _userThreads[user.Id].Add(thread.Id);
+                    }
+
+                    // Cross-tenant flag if applicable
+                    if (user.IsFromFabrikam)
+                    {
+                        thread.IsCrossTenant = true;
+                    }
+                }
             }
         }
     }

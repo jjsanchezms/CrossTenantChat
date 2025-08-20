@@ -82,13 +82,13 @@ builder.Services.AddMemoryCache();
 if (environment == "Live")
 {
     builder.Services.AddScoped<IEntraIdAuthenticationService, LiveEntraIdAuthenticationService>();
-    builder.Services.AddScoped<IAzureCommunicationService, LiveAzureCommunicationService>();
+    builder.Services.AddSingleton<IAzureCommunicationService, LiveAzureCommunicationService>();
     Console.WriteLine($"🚀 Live Azure Services registered for environment: {environment}");
 }
 else
 {
     builder.Services.AddScoped<IEntraIdAuthenticationService, EntraIdAuthenticationService>();
-    builder.Services.AddScoped<IAzureCommunicationService, AzureCommunicationService>();
+    builder.Services.AddSingleton<IAzureCommunicationService, AzureCommunicationService>();
     Console.WriteLine($"📋 Demo Services registered for environment: {environment}");
 }
 

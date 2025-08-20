@@ -323,6 +323,14 @@
 
             // Load user's chat threads
             await RefreshUserThreads();
+
+            // Do not auto-create or auto-select a default thread.
+            // Require the user to explicitly create or choose a thread.
+            if (userThreads.Count == 0)
+            {
+                // Prompt user to create a thread if none exist
+                showNewThreadModal = true;
+            }
         }
         catch (Exception ex)
         {
@@ -429,6 +437,7 @@
 
         try
         {
+            // Create explicitly-named thread; caching layer will store/reuse for the user.
             var newThread = await AcsService.CreateChatThreadAsync(newThreadTopic, new[] { currentUser.Id });
             await RefreshUserThreads();
             
