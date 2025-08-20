@@ -37,12 +37,15 @@ namespace CrossTenantChat.Services
             _threadMessages = new Dictionary<string, List<Models.ChatMessage>>();
             _userThreads = new Dictionary<string, List<string>>();
 
-            // Initialize ACS client if connection string is provided
-            if (!string.IsNullOrEmpty(_azureConfig.AzureCommunicationServices.ConnectionString))
+            // Initialize ACS client if connection string is provided and valid
+            var connectionString = _azureConfig.AzureCommunicationServices.ConnectionString;
+            if (!string.IsNullOrEmpty(connectionString) && 
+                !connectionString.Contains("your-acs-connection-string-here") &&
+                !connectionString.Contains("placeholder"))
             {
                 try
                 {
-                    _identityClient = new CommunicationIdentityClient(_azureConfig.AzureCommunicationServices.ConnectionString);
+                    _identityClient = new CommunicationIdentityClient(connectionString);
                     _logger.LogInformation("Azure Communication Services client initialized successfully");
                 }
                 catch (Exception ex)
@@ -52,7 +55,7 @@ namespace CrossTenantChat.Services
             }
             else
             {
-                _logger.LogInformation("No ACS connection string provided, running in demo mode");
+                _logger.LogInformation("No valid ACS connection string provided, running in demo mode");
             }
         }
 

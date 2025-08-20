@@ -130,7 +130,6 @@ namespace CrossTenantChat.Controllers
         }
 
         [HttpGet("/profile")]
-        [Authorize]
         public IActionResult Profile()
         {
             return Json(new

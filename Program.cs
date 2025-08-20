@@ -12,6 +12,12 @@ using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure static web assets for development
+if (builder.Environment.IsDevelopment())
+{
+    builder.WebHost.UseStaticWebAssets();
+}
+
 // Environment-specific configuration
 var environment = builder.Environment.EnvironmentName;
 builder.Configuration.AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true);
