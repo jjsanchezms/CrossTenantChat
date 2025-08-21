@@ -175,7 +175,7 @@ body{
 }
 
 /* Collapse menu on mobile (pure CSS using :has support fallback handled with @media) */
-@media (max-width: 992px){
+@media (max-width: 640px){
   .fluent-nav-menu{ display:none; margin-top: var(--space-2); }
   .fluent-sidebar:has(.fluent-nav-toggle[aria-expanded="true"]) .fluent-nav-menu{ display:flex; }
 }
