@@ -296,27 +296,11 @@ public class LiveAzureCommunicationService : IAzureCommunicationService
                 _operationTracker.AddStep(operationId, "CreateCommunicationUser", 
                     $"Creating new communication user for: {user.Id}", true);
                 
-                // Create new communication user
-                var communicationUserResponse = await _identityClient.CreateUserAsync();
-                
-                if (communicationUserResponse?.Value?.Id == null)
-                {
-                    _logger.LogError("❌ CreateUserAsync returned null or invalid response");
-                    result.ErrorMessage = "Failed to create ACS communication user - null response";
-                    result.IsSuccess = false;
-                    _operationTracker.AddStep(operationId, "CreateCommunicationUser", 
-                        "Failed to create communication user - null response", false, null, result.ErrorMessage);
-                    _operationTracker.CompleteOperation(operationId, false, result.ErrorMessage);
-                    return result;
-                }
-                
-                communicationUserId = communicationUserResponse.Value.Id;
+                // IMPORTANT: Use the same helper method to ensure consistency across the app
+                communicationUserId = await EnsureAcsUserForAppUserAsync(user.Id, user);
                 
                 _logger.LogInformation("✅ Created new communication user: {CommunicationUserId} for EntraId user: {UserId}", 
                     communicationUserId, user.Id);
-                
-                // Cache the communication user identity (longer cache since this doesn't expire)
-                _memoryCache.Set(userCacheKey, communicationUserId, TimeSpan.FromHours(24));
 
                 _operationTracker.AddStep(operationId, "CreateCommunicationUser", 
                     $"Successfully created communication user: {communicationUserId}", true, 
